@@ -210,7 +210,7 @@ VIEWS.train = () => {
   return `<div class="eyebrow">Walkthrough</div><h1 class="h1">Training</h1>
   <p class="sub">Nine short lessons, easy to boss-level. Each one: the idea, an X-ray of where to look, then guided problems with hints.</p>
   <div class="stack mt">${LESSONS.map((l) => { const st = S.lessons[l.id] || {}; const n = l.cards.filter((c) => c.t === 'try').length;
-    return `<button class="card tap lesson ${st.done ? 'done' : l === cur ? 'cur' : ''}" data-act="lesson" data-id="${l.id}"><span class="num">${st.done ? '✓' : l.id.slice(1)}</span><span><h3>${esc(l.title)}</h3><p>${esc(l.sub)}</p></span><span class="chip">${n} drills</span></button>`; }).join('')}
+    return `<button class="card tap lesson ${st.done ? 'done' : l === cur ? 'cur' : ''}" data-act="lesson" data-id="${l.id}"><span class="num">${st.done ? '✓' : l.id.slice(1)}</span><span><h3>${esc(l.title)}</h3><p>${esc(l.sub)}</p></span><span class="chip">${!st.done && st.pos ? `Resume ${st.pos + 1}/${l.cards.length}` : `${n} drills`}</span></button>`; }).join('')}
   </div>
   <div class="mt-l eyebrow">Skill drills</div>
   <div class="stack mt">
@@ -219,7 +219,14 @@ VIEWS.train = () => {
   </div>`;
 };
 
-// lesson player
+// lesson player · position is saved per lesson (pos = current card, max = furthest card reached),
+// so leaving and coming back resumes, and cards already passed never have to be re-answered.
+function openLesson(id, i) {
+  const l = LESSONS.find((x) => x.id === id), st = (S.lessons[id] ||= {});
+  i = Math.max(0, Math.min(i, l.cards.length - 1));
+  st.pos = i; st.max = Math.max(st.max || 0, i); save();
+  go('lesson', { id, i });
+}
 VIEWS.lesson = () => {
   const l = LESSONS.find((x) => x.id === ctx.id), i = ctx.i ?? 0, c = l.cards[i];
   let body = '';
@@ -234,10 +241,11 @@ VIEWS.lesson = () => {
     ${hints.slice(0, ctx.hints || 0).map((h, k) => `<div class="hint"><span class="eyebrow" style="color:var(--k-yellow)">Hint ${k + 1}</span><div style="margin-top:6px">${rich(h)}</div></div>`).join('')}
     ${choicesHTML(pr, { picked: ctx.picked, reveal: ctx.reveal })}
     ${done ? explainHTML(pr, ctx.picked, ctx.ms) : `<div class="row mt"><button class="key ghost sm" data-act="hint" ${(ctx.hints || 0) >= hints.length ? 'disabled' : ''}>Hint ${(ctx.hints || 0) + 1 > hints.length ? '' : (ctx.hints || 0) + 1}/${hints.length}</button><span class="sub" style="font-size:13px">Hints switch on the X-ray.</span></div>`}`; }
-  const canNext = c.t !== 'try' || ctx.reveal;
+  const st = S.lessons[l.id] || {}, passed = st.done || i < (st.max || 0);
+  const canNext = c.t !== 'try' || ctx.reveal || passed;
   return `<div class="hud"><button class="key ghost sm" data-act="nav" data-to="train" aria-label="Exit lesson">✕</button><div class="dots">${l.cards.map((_, k) => `<i class="${k === i ? 'on' : k < i ? 'past' : ''}"></i>`).join('')}</div><span class="count">${i + 1}/${l.cards.length}</span></div>
   ${body}
-  <div class="sticky-next row">${i > 0 ? `<button class="key" data-act="lprev" aria-label="Back">←</button>` : ''}<button class="key yellow wide" data-act="lnext" ${canNext ? '' : 'disabled'}>${i === l.cards.length - 1 ? 'Finish lesson' : c.t === 'try' && !ctx.reveal ? 'Answer to continue' : 'Next'}</button></div>`;
+  <div class="sticky-next row">${i > 0 ? `<button class="key" data-act="lprev" aria-label="Back">←</button>` : ''}<button class="key yellow wide" data-act="lnext" ${canNext ? '' : 'disabled'}>${i === l.cards.length - 1 ? 'Finish lesson' : c.t === 'try' && !canNext ? 'Answer to continue' : 'Next'}</button></div>`;
 };
 
 // ───────────── RECON (recognition sprint) ─────────────
@@ -509,12 +517,12 @@ function importData(file) {
 // ───────────── events ─────────────
 const ACT = {
   nav: (d) => go(d.to, d.tab ? { tab: d.tab } : {}),
-  lesson: (d) => go('lesson', { id: d.id, i: 0 }),
+  lesson: (d) => { const st = S.lessons[d.id] || {}; openLesson(d.id, st.done ? 0 : st.pos || 0); },
   hint: () => { ctx.hints = (ctx.hints || 0) + 1; render(); },
-  lprev: () => go('lesson', { id: ctx.id, i: ctx.i - 1 }),
+  lprev: () => openLesson(ctx.id, ctx.i - 1),
   lnext: () => { const l = LESSONS.find((x) => x.id === ctx.id);
-    if (ctx.i >= l.cards.length - 1) { S.lessons[l.id] = { done: true, at: Date.now() }; save(); toast(`Lesson ${l.id.slice(1)} complete`); return go('train'); }
-    go('lesson', { id: ctx.id, i: ctx.i + 1 }); },
+    if (ctx.i >= l.cards.length - 1) { S.lessons[l.id] = { ...S.lessons[l.id], done: true, at: Date.now(), pos: 0, max: l.cards.length - 1 }; save(); toast(`Lesson ${l.id.slice(1)} complete`); return go('train'); }
+    openLesson(ctx.id, ctx.i + 1); },
   pick: (d) => { const i = +d.i;
     if (route === 'lesson') { if (ctx.reveal) return; const pr = ctx.pr, ok = i === pr.correct; ctx.picked = i; ctx.ms = performance.now() - ctx.t0; ctx.reveal = true;
       const orig = i === 4 ? 4 : pr.order[i]; record(pr.p, ok, ctx.ms, ok ? null : pr.p.ans === 4 ? 'nota' : trapOf(pr.p, orig).tag); return render(); }
