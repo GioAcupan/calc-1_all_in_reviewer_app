@@ -41,7 +41,7 @@ export const TRAPS = {
   const: { name: 'Mishandled constants (partials)', fix: 'Before differentiating, physically underline every term that contains the live variable. The rest is dead.', lesson: 'L6' },
   rule: { name: 'Wrong rule', fix: 'Name the structure out loud first: product? quotient? u^v? fake quotient?', lesson: 'L1' },
   form: { name: 'Misjudged limit form', fix: 'Always substitute first. 0⁰, 1^∞, ∞⁰ are never "obviously 1"; 0/2 is not indeterminate.', lesson: 'L7' },
-  coef: { name: 'Coefficient slips', fix: 'Write the Taylor coefficient table once on scratch paper at the start of the exam.', lesson: 'L8' },
+  coef: { name: 'Coefficient slips', fix: 'Recount the constant each layer contributes (chain factors, halves, squares). In limits, do not trust a remembered coefficient: CALC at a+0.01 and pick the closest option.', lesson: 'L8' },
   order: { name: 'Answered a different question', fix: 'Re-read the subscript / order of derivative before choosing. Decoys are often the right answer to a neighbouring question.', lesson: 'L1' },
   nota: { name: 'Missed "None of the above"', fix: 'If your verified result matches nothing, trust it. One numeric check proves "None".', lesson: 'L9' },
   time: { name: 'Over the 2:00 budget', fix: 'Triage: decide hand vs calculator in the first 10 seconds. Skip-and-return beats sinking 5 minutes.', lesson: 'L1' },
@@ -215,7 +215,12 @@ The options will differ by sign placement: $-\dfrac{A}{1-y}=\dfrac{A}{y-1}$.
     { t: 'note', h: 'Step zero: plug in', b: r`Substitute the point first. If you get a number, or $\dfrac{0}{2}$, or $\dfrac{3}{0}$ — it is **not** indeterminate and L'Hôpital gives a wrong answer. Examiners plant these on purpose. Read *where* $x$ is going.` },
     { t: 'xray', pid: 'X08' },
     { t: 'try', pid: 'C39' },
-    { t: 'note', h: 'Small-angle swap', b: r`As $u\to0$, inside products and quotients only:
+    { t: 'note', h: 'Three routes to any limit', b: r`**1 · L'Hôpital** — what you were taught, and all the exam can formally require. One or two rounds is fine by hand. For $1^\infty$, $0^0$, $\infty^0$: take $\ln$ first, then L'Hôpital, then exponentiate.
+
+**2 · CALC** — type the expression, evaluate at $X=a+0.01$ (or $X=100$ for $x\to\infty$), pick the closest option. Every limit problem in this app has been checked to give the right option this way. This is the practical route when L'Hôpital would take three or four rounds.
+
+**3 · Shortcuts** — the small-angle swaps and series terms on the next cards. They are NOT new theory: each one is a L'Hôpital result memorised (for example $\dfrac{\sin u}{u}\to1$ is one round). They are optional. Every explanation in the app shows the L'Hôpital route first and the shortcut second.` },
+    { t: 'note', h: 'Shortcut (optional): small-angle swap', b: r`As $u\to0$, inside products and quotients only:
 
 $\sin u,\ \tan u,\ \sinh u,\ \tanh u,\ \sin^{-1}u,\ \tan^{-1}u,\ \ln(1+u),\ e^u-1\ \longrightarrow\ u$
 
@@ -225,7 +230,9 @@ $u$ can be anything that goes to $0$: $3x$, $\tfrac{4}{x-1}$, even $x-\sin x$.` 
     { t: 'try', pid: 'X03' },
     { t: 'try', pid: 'X11' },
     { t: 'try', pid: 'X13' },
-    { t: 'note', h: 'Exponential forms', b: r`**$1^\infty$:** $\lim\,[1+f]^g=e^{\lim f\cdot g}$. If the base isn't written as $1+f$, then $f=\text{base}-1$.
+    { t: 'note', h: 'Exponential forms', b: r`**The taught method:** take $\ln$, turn it into a quotient, L'Hôpital, exponentiate. The lines below are the same thing done once and remembered.
+
+**$1^\infty$:** $\lim\,[1+f]^g=e^{\lim f\cdot g}$. If the base isn't written as $1+f$, then $f=\text{base}-1$.
 
 **$0^0$, $\infty^0$:** take the log. $\ln y=g\ln f$, find that limit $L$, answer $e^L$. Common values: $x^x\to1$, $x^{1/x}\to1$ — but never assume; $x^{3/\ln x}=e^3$ exactly.
 
@@ -241,7 +248,9 @@ $u$ can be anything that goes to $0$: $3x$, $\tfrac{4}{x-1}$, even $x-\sin x$.` 
 Two defences:
 • **CALC at $X=0.01$**, not smaller (for $x\to\infty$: $X=100$, not $10^6$). Expect ~2 correct digits — enough to pick an option.
 • **Know the next Taylor term.** These problems are literally "function minus its own Taylor polynomial".` },
-    { t: 'note', h: 'The table to write on your scratch paper', b: r`$e^u=1+u+\dfrac{u^2}{2}+\dfrac{u^3}{6}+\dfrac{u^4}{24}$
+    { t: 'note', h: 'Optional: the table that makes these instant', b: r`You do not need this table — CALC at $X=0.01$ answers every problem in this lesson. But if a few lines stick, the 4-round L'Hôpital problems become 10-second problems.
+
+$e^u=1+u+\dfrac{u^2}{2}+\dfrac{u^3}{6}+\dfrac{u^4}{24}$
 
 $\sin u=u-\dfrac{u^3}{6}$ · $\sinh u=u+\dfrac{u^3}{6}$
 
@@ -327,7 +336,7 @@ export const REFERENCE = [
     F(r`\dfrac{d}{dx}\left[x\cosh^{-1}(ax)-\tfrac1a\sqrt{a^2x^2-1}\right]`, r`\cosh^{-1}(ax)`, 'Telescope'),
     F(r`\operatorname{sech}^{-1}u=\ ?`, r`\cosh^{-1}(1\div u)`, 'How to type it on the fx-991ES'), F(r`\coth^{-1}u=\ ?`, r`\tanh^{-1}(1\div u)`, 'How to type it on the fx-991ES'),
   ] },
-  { id: 'limits', title: 'Limits toolkit', rows: [
+  { id: 'limits', title: 'Limit shortcuts (optional)', note: r`Not part of the syllabus, and no problem needs them. Each line is just the result of running L'Hôpital once or twice, memorised. If you'd rather not memorise them: use L'Hôpital for the short ones and CALC at $a+0.01$ for the long ones.`, rows: [
     F(r`\sin u,\tan u,\sinh u,\tanh u\ (u\to0)`, r`\approx u`), F(r`\ln(1+u),\ e^u-1\ (u\to0)`, r`\approx u`),
     F(r`1-\cos u`, r`\approx\dfrac{u^2}{2}`), F(r`\cosh u-1`, r`\approx\dfrac{u^2}{2}`),
     F(r`\sin u-u`, r`\approx-\dfrac{u^3}{6}`), F(r`\sinh u-u`, r`\approx+\dfrac{u^3}{6}`),

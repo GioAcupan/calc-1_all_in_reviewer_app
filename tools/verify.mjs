@@ -2,13 +2,14 @@
 // usage: node tools/verify.mjs js/data/bank-a.js [more files...]
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
-import { evalProblem, close } from '../js/mathenv.js';
+import { evalProblem, close, limitProbes, nearestOption } from '../js/mathenv.js';
 
 const TOPICS = ['explog', 'hyp', 'invhyp', 'partial', 'lhopital', 'found'];
 const files = process.argv.slice(2);
 let fail = 0, total = 0;
 const ids = new Set();
 const all = {};
+let calcN = 0, calcOk = 0;
 for (const f of files) {
   const mod = await import(pathToFileURL(path.resolve(f)).href);
   for (const p of mod.default) {
@@ -42,9 +43,17 @@ for (const f of files) {
         if (p.ans === 4 && !close(r.truthExpr, r.truth, loose)) errs.push(`NOTA truth mismatch: numeric=${r.truth} expr=${r.truthExpr}`);
       }
     }
+    if (p.kind === 'lim' && !errs.length) {
+      // plain CALC at the middle probe (a ± 0.01, or X = ±100) must land on the keyed option
+      calcN++;
+      const v = limitProbes(p)[1].v, near = nearestOption(p, v);
+      const ok = p.ans === 4 ? near.d > 0.03 * (1 + Math.abs(v)) : near.i === p.ans;
+      if (ok) calcOk++; else errs.push(`calculator route fails: CALC gives ${v}, nearest option ${near.i}`);
+    }
     if (errs.length) { fail++; console.log(`FAIL ${p.id}: ${[...new Set(errs)].join(' | ')}`); }
   }
 }
+if (calcN) console.log(`${calcOk}/${calcN} limit problems: plain CALC near the point picks the keyed answer`);
 // NOTA variants: swap the correct option for the extra distractor; E must then be right.
 let extras = {};
 try { extras = (await import('../js/data/nota-extra.js')).default; } catch {}

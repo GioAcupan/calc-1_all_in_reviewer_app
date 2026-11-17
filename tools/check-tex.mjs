@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { LESSONS, REFERENCE, PLAYBOOK, TECHS } from '../js/data/content.js';
 import extras from '../js/data/nota-extra.js';
+import routes from '../js/data/lhopital-routes.js';
 // The vendored bundle is UMD; evaluate it with a fake global because this package is "type": "module".
 const g = {};
 new Function('self', 'exports', 'module', 'define', readFileSync(new URL('../vendor/katex/katex.min.js', import.meta.url), 'utf8'))(g);
@@ -30,6 +31,8 @@ for (const f of ['core-a', 'core-b', 'core-c', 'core-d', 'mock', 'leithold', 'pe
   }
 }
 for (const [id, ex] of Object.entries(extras)) { if (!ids.has(id)) bad.push(`nota-extra ${id}: no such problem`); tex(`extra ${id}`, ex[0]); rich(`extra ${id}.trap`, ex[2].split('|').slice(1).join('|')); }
+for (const [id, t] of Object.entries(routes)) { if (!ids.has(id)) bad.push(`lhopital-routes ${id}: no such problem`); rich(`route ${id}`, t); }
+for (const s of REFERENCE) rich(`ref note ${s.id}`, s.note);
 for (const l of LESSONS) for (const c of l.cards) { rich(`${l.id}.h`, c.h); rich(`${l.id}.b`, c.b); if (c.pid && !ids.has(c.pid)) bad.push(`${l.id}: missing problem ${c.pid}`); }
 for (const s of REFERENCE) for (const r of s.rows) { tex(`ref ${s.id}`, r.q); tex(`ref ${s.id}`, r.a); }
 for (const x of PLAYBOOK) rich('playbook', x.b);

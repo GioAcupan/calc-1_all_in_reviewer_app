@@ -7,7 +7,8 @@ import coreC from './data/bank-core-c.js';
 import coreD from './data/bank-core-d.js';
 import NOTA_EXTRA from './data/nota-extra.js';
 import { TOPICS, TECHS, TRAPS, LESSONS, REFERENCE, PLAYBOOK } from './data/content.js';
-import { evalProblem, close } from './mathenv.js';
+import { evalProblem, close, limitProbes, nearestOption } from './mathenv.js';
+import LH from './data/lhopital-routes.js';
 
 const BANK = [...coreA, ...coreB, ...coreC, ...coreD, ...mock, ...leithold, ...peterson];
 const BY_ID = Object.fromEntries(BANK.map((p) => [p.id, p]));
@@ -72,7 +73,17 @@ function tape(pr) {
   if (p.kind === 'free') return '';
   let r; try { r = evalProblem(p); } catch { return ''; }
   if (!r || Number.isNaN(r.truth)) return '';
-  const isLim = p.kind === 'lim', atPt = p.at != null;
+  if (p.kind === 'lim') {
+    const pts = limitProbes(p), show = (v) => (Number.isFinite(v) ? fmtN(v) : 'Math ERROR');
+    const inf = p.to === 'inf' || p.to === '-inf', near = nearestOption(p, pts[1].v).i;
+    let out = `<b>CALC near ${inf ? (p.to === 'inf' ? '∞' : '−∞') : 'the point'}</b>\n`;
+    pts.forEach((q, k) => { out += `  X = ${String(+q.x.toPrecision(7)).padEnd(10)} → ${show(q.v)}${k === 1 ? '   ← use this' : ''}\n`; });
+    out += `<b>Options as decimals</b>\n`;
+    pr.order.forEach((oi, i) => { const o = r.choices[oi], hit = p.ans !== 4 && oi === near; out += `${hit ? '<span class="hit">' : ''}  ${LETTERS[i]}  ${(Number.isNaN(o) ? 'does not exist' : fmtN(o)).padEnd(12)}${hit ? ' ← closest</span>' : ''}\n`; });
+    if (p.ans === 4) out += `<span class="hit">  no option is close ⇒ None of the above</span>\n`;
+    return out;
+  }
+  const isLim = false, atPt = p.at != null;
   let head;
   if (isLim) head = `CALC near x → ${p.to === 'inf' ? '∞' : p.to === '-inf' ? '−∞' : p.to.replace('PI', 'π').replace(/\*/g, '')}`;
   else if (p.kind === 'd') head = atPt ? `d/dx at the given point` : `d${p.n > 1 ? '^' + p.n : ''}/dx at X = ${r.point[0]}`;
@@ -115,7 +126,8 @@ function explainHTML(pr, picked, ms) {
     <div class="row between"><div class="verdict ${ok ? 'ok' : 'no'}">${ok ? '✓ Correct' : picked == null ? '— Skipped' : '✕ Not quite'}</div>${speed}</div>
     <div class="fb-sec"><div class="eyebrow">The move · ${esc(t.name)}</div><div>${rich(p.xr || t.move)}</div></div>
     ${truth}
-    <div class="fb-sec"><div class="eyebrow">Fast path</div><div class="scroll-x">${rich(p.sol)}${p.variant ? '<br><b>That expression was not among the options this time ⇒ None of the above.</b>' : ''}</div></div>
+    ${LH[p.id] ? `<div class="fb-sec"><div class="eyebrow">L'Hôpital route · what you were taught</div><div class="scroll-x">${rich(LH[p.id])}</div></div>` : ''}
+    <div class="fb-sec"><div class="eyebrow">${LH[p.id] ? 'Shortcut · optional' : 'Fast path'}</div><div class="scroll-x">${rich(p.sol)}${p.variant ? '<br><b>That expression was not among the options this time ⇒ None of the above.</b>' : ''}</div></div>
     ${p.calc ? `<div class="fb-sec"><div class="eyebrow">Calculator</div><div>${rich(p.calc)}</div></div>` : ''}
     ${tp ? `<div class="fb-sec"><div class="eyebrow">Calculator tape</div><div class="tape">${tp}</div></div>` : ''}
     <div class="fb-sec row" style="flex-wrap:wrap;gap:6px"><span class="chip">${TOPICS[p.topic].name}</span><span class="chip">${['', 'Easy', 'Medium', 'Hard'][p.diff]}</span>${p.src ? `<span class="chip">${esc(p.src)}</span>` : ''}</div>
@@ -144,6 +156,7 @@ function go(r, c = {}) {
 }
 function render() { view.innerHTML = `<div class="fade">${VIEWS[route]()}</div>`; AFTER[route]?.(); }
 const VIEWS = {}, AFTER = {};
+const LIM_TITLE = REFERENCE.find((s) => s.id === 'limits').title;
 
 // ───────────── aggregate stats ─────────────
 function totals() {
@@ -409,22 +422,24 @@ function revRow(x, i) { const p = BY_ID[x.id]; return `<button class="rev" data-
 const DECK = [...REFERENCE.flatMap((s) => s.rows.map((r, i) => ({ id: `${s.id}-${i}`, sec: s.title, q: r.q, a: r.a, note: r.note }))),
   ...Object.entries(TECHS).filter(([k]) => k !== 'direct').map(([k, t]) => ({ id: 'tech-' + k, sec: 'Technique', text: true, q: t.name, a: t.move }))];
 VIEWS.vault = () => {
-  const tab = ctx.tab || 'formulas', due = DECK.filter((c) => (S.srs[c.id]?.due || 0) <= Date.now()).length;
+  const tab = ctx.tab || 'formulas', due = deck().filter((c) => (S.srs[c.id]?.due || 0) <= Date.now()).length;
   let body;
-  if (tab === 'formulas') body = `<div class="stack mt">${REFERENCE.map((s, i) => `<details class="sec" ${i === 0 ? 'open' : ''}><summary>${esc(s.title)}</summary><div style="padding-bottom:8px">${s.rows.map((r) => `<div class="ref-row"><div>${tex(r.q)}</div><span class="arrow">→</span><div>${tex(r.a)}</div>${r.note ? `<div class="nt">${esc(r.note)}</div>` : ''}</div>`).join('')}</div></details>`).join('')}</div>`;
+  if (tab === 'formulas') body = `<div class="stack mt">${REFERENCE.map((s, i) => `<details class="sec" ${i === 0 ? 'open' : ''}><summary>${esc(s.title)}</summary><div style="padding-bottom:8px">${s.note ? `<p class="sub" style="font-size:14px;padding-bottom:6px">${rich(s.note)}</p>` : ''}${s.rows.map((r) => `<div class="ref-row"><div>${tex(r.q)}</div><span class="arrow">→</span><div>${tex(r.a)}</div>${r.note ? `<div class="nt">${esc(r.note)}</div>` : ''}</div>`).join('')}</div></details>`).join('')}</div>`;
   else if (tab === 'playbook') body = `<div class="stack mt"><div class="lcd"><div class="lcd-row"><span>fx-991ES PLUS</span><span>RAD · X=1.37 · Y=2.13</span></div><div class="stem" style="font-size:15px;line-height:1.6">Triage 10 s → prune 20 s → verify 60 s. Test <b>one</b> surviving option. Edit in place. Trust the decimal.</div></div>
     ${PLAYBOOK.map((x) => `<div class="card"><div class="eyebrow" style="color:var(--k-yellow)">${esc(x.h)}</div><div style="margin-top:8px;font-size:15px">${rich(x.b)}</div></div>`).join('')}
     <div class="card"><div class="eyebrow" style="color:var(--k-yellow)">Technique index</div>${Object.values(TECHS).map((t) => `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>${esc(t.name)}</b><div class="sub" style="font-size:14px">${esc(t.move)}</div></div>`).join('')}</div></div>`;
-  else body = `<div class="lcd mt" style="text-align:center"><div class="lcd-row"><span>Flashcards</span><span>${DECK.length} cards</span></div><div class="score-big" style="position:relative;z-index:1;font-size:72px">${due}<small> due</small></div></div>
+  else body = `<div class="lcd mt" style="text-align:center"><div class="lcd-row"><span>Flashcards</span><span>${deck().length} cards</span></div><div class="score-big" style="position:relative;z-index:1;font-size:72px">${due}<small> due</small></div></div>
     <p class="sub mt">Every formula, identity and technique in the Vault, scheduled by spaced repetition. Cards you miss come back today; cards you know drift out to days and weeks.</p>
     <button class="key yellow wide mt" style="min-height:56px" data-act="flash" ${due ? '' : 'disabled'}>${due ? `Review ${Math.min(due, 20)} cards` : 'All caught up'}</button>
-    ${due ? '' : `<button class="key wide mt" data-act="flash" data-all="1">Practice anyway</button>`}`;
+    ${due ? '' : `<button class="key wide mt" data-act="flash" data-all="1">Practice anyway</button>`}
+    <div class="card mt" style="padding:4px 16px"><div class="opt"><div><b>Include limit shortcuts</b><small>Small-angle swaps and series terms. Optional: every limit can be done with L'Hôpital or CALC.</small></div><button class="switch ${S.settings.noLimCards ? '' : 'on'}" data-act="set" data-k="noLimCards" role="switch" aria-checked="${!S.settings.noLimCards}" aria-label="Include limit shortcuts"></button></div></div>`;
   return `<div class="eyebrow">Appendix</div><h1 class="h1">Vault</h1>
   <div class="seg mt">${[['formulas', 'Formulas'], ['playbook', 'Playbook'], ['flash', `Cards${due ? ' · ' + due : ''}`]].map(([k, l]) => `<button data-act="vtab" data-k="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>${body}`;
 };
+const deck = () => (S.settings.noLimCards ? DECK.filter((c) => c.sec !== LIM_TITLE) : DECK);
 function startFlash(all) {
   const now = Date.now();
-  let q = shuffle(DECK.filter((c) => all || (S.srs[c.id]?.due || 0) <= now)).slice(0, 20);
+  let q = shuffle(deck().filter((c) => all || (S.srs[c.id]?.due || 0) <= now)).slice(0, 20);
   go('flash', { q, i: 0, n: q.length, flip: false, seen: 0 });
 }
 VIEWS.flash = () => {

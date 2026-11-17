@@ -131,3 +131,24 @@ export function close(a, b, loose = false) {
   const tol = loose ? 0.02 : 2e-5;
   return Math.abs(a - b) <= tol * (1 + Math.abs(a) + Math.abs(b)) / 2 + (loose ? 0.004 : 0);
 }
+
+// What typing the expression into a calculator shows near the limit point (three probes).
+export function limitProbes(p) {
+  const g = compile(p.f);
+  let xs;
+  if (p.to === 'inf') xs = [10, 100, 1000];
+  else if (p.to === '-inf') xs = [-10, -100, -1000];
+  else { const a = compile(p.to)(), s = p.side === '-' ? -1 : 1; xs = [0.1, 0.01, 0.001].map((h) => a + s * h); }
+  return xs.map((x) => { let v; try { v = g(x, 0, 0); } catch { v = NaN; } return { x, v }; });
+}
+// Index of the option closest to a calculator reading v, and how far it is.
+export function nearestOption(p, v) {
+  let best = -1, bd = Infinity;
+  if (!Number.isFinite(v)) return { i: -1, d: Infinity };
+  p.ch.forEach((c, i) => {
+    let o; try { o = compile(c[1])(); } catch { o = NaN; }
+    const d = Number.isFinite(o) ? Math.abs(o - v) : (Math.abs(v) > 1e4 && Math.sign(o) === Math.sign(v) ? 0 : Infinity);
+    if (d < bd) { bd = d; best = i; }
+  });
+  return { i: best, d: bd };
+}
