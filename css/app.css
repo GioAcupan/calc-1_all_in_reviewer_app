@@ -49,6 +49,9 @@ h1, h2, h3, p { margin: 0; }
 .h2 { font: 800 21px/1.15 var(--font); letter-spacing: -.02em; }
 .sub { color: var(--ink-2); font-size: 15px; }
 .mono { font-family: var(--mono); }
+.credit { margin: 36px 0 8px; text-align: center; font: 500 11.5px var(--mono); letter-spacing: .06em; color: var(--ink-3); }
+.credit a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
+.ref-title { margin: 8px 0 4px; font: 800 18px/1.2 var(--font); letter-spacing: -.01em; }
 .row { display: flex; align-items: center; gap: 10px; }
 .between { justify-content: space-between; }
 .stack { display: grid; gap: 12px; }

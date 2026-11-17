@@ -2,7 +2,7 @@
 // App code (html/css/js/data): network-first with a 3 s timeout, falling back to cache — so a new
 // deploy shows up immediately when online, and the app still opens with no connection.
 // Vendored assets (KaTeX, fonts, icons): cache-first, they never change.
-const VERSION = 'calc1-v8';
+const VERSION = 'calc1-v9';
 const CORE = ['./', 'index.html', 'css/app.css', 'js/app.js', 'js/mathenv.js', 'js/data/content.js', 'js/data/nota-extra.js', 'js/data/lhopital-routes.js',
   'js/data/bank-core-a.js', 'js/data/bank-core-b.js', 'js/data/bank-core-c.js', 'js/data/bank-core-d.js',
   'js/data/bank-mock.js', 'js/data/bank-leithold.js', 'js/data/bank-peterson.js',

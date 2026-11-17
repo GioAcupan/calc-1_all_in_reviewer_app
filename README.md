@@ -14,3 +14,13 @@ Static site, no build step. Locally: `python -m http.server 5173` then open http
 ## Problem bank
 
 234 problems (plus 30 "None of the above" variants) in `js/data/bank-*.js`. Each carries a JS expression for the function and for every option; `node tools/verify.mjs js/data/bank-*.js` differentiates / takes limits numerically and checks every answer key and distractor. The same expressions power the in-app "calculator tape". For every limit problem the verifier also checks that plainly evaluating the expression near the point lands on the keyed option, and `js/data/lhopital-routes.js` gives a L'Hôpital-only route wherever the explanation uses a shortcut. `node tools/check-tex.mjs` renders every LaTeX fragment with KaTeX and checks lesson references.
+
+## Credits
+
+Made by Gio. Problems are drawn from:
+
+- **Calculus 1 — An AidYourMathm8 Mock Exam for A.Y. 2026–27**, created by Elfred Vic V. Ignacio for the AYM (Aid Your Mathmate) event of the PLM-Mathematical Society. Items are re-typeset and tagged "AYM Mock Exam 26–27 #n"; the original workbook is not included (it may only be distributed within the PLM-Mathematical Society).
+- **The Calculus 7 (TC7)** by Louis Leithold, HarperCollins College Publishers.
+- **Analytic Geometry and Calculus** by Thurman S. Peterson, Harper & Brothers, 1955.
+
+The rest are original problems written for this reviewer. Built with KaTeX (MIT), Bricolage Grotesque and JetBrains Mono (SIL OFL). The same list is in the app under Stats → credits & references.

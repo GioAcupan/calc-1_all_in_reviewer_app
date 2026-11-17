@@ -149,7 +149,7 @@ function go(r, c = {}) {
   route = r; ctx = c;
   const immersive = ['run', 'lesson', 'recon', 'flash'].includes(r);
   nav.classList.toggle('hidden', immersive);
-  const top = { results: 'arena', lesson: 'train', recon: 'train', flash: 'vault', run: 'arena' }[r] || r;
+  const top = { results: 'arena', lesson: 'train', recon: 'train', flash: 'vault', run: 'arena', credits: 'me' }[r] || r;
   nav.innerHTML = `<div class="brand">Calc 1<br>All-In<small>FINALS REVIEWER</small></div>` + TABS.map(([id, label]) => `<button class="tab ${top === id ? 'on' : ''}" data-act="nav" data-to="${id}">${I[id]}<span>${label}</span></button>`).join('');
   render();
   window.scrollTo(0, 0);
@@ -195,8 +195,10 @@ VIEWS.home = () => {
     </div>
   </div>
   ${wt.length ? `<div class="mt-l"><div class="eyebrow">Your recurring traps</div><div class="card mt" style="padding:4px 16px">${wt.map(([tag, n]) => fixRow(tag, n)).join('')}</div></div>` : ''}
-  <div class="mt-l"><div class="eyebrow">Exam coverage</div><div class="card mt">${Object.entries(TOPICS).map(([id, tp]) => { const b = t.byTopic[id] || { n: 0, c: 0 }; return `<div class="meter"><span>${tp.name}</span><div class="track"><i style="width:${pct(b.c, b.n)}%;background:${tp.color}"></i></div><span>${b.n ? pct(b.c, b.n) + '%' : '—'}</span></div>`; }).join('')}</div></div>`;
+  <div class="mt-l"><div class="eyebrow">Exam coverage</div><div class="card mt">${Object.entries(TOPICS).map(([id, tp]) => { const b = t.byTopic[id] || { n: 0, c: 0 }; return `<div class="meter"><span>${tp.name}</span><div class="track"><i style="width:${pct(b.c, b.n)}%;background:${tp.color}"></i></div><span>${b.n ? pct(b.c, b.n) + '%' : '—'}</span></div>`; }).join('')}</div></div>
+  ${credit()}`;
 };
+const credit = () => `<p class="credit">made by Gio · <a href="#" data-act="nav" data-to="credits">credits &amp; references</a></p>`;
 function fixRow(tag, n) {
   const tr = TRAPS[tag] || TRAPS.algebra;
   return `<div class="fix"><div class="n">${n}×</div><div><h4>${esc(tr.name)}</h4><p>${esc(tr.fix)}</p><a href="#" data-act="lesson" data-id="${tr.lesson}">Review lesson ${tr.lesson.slice(1)} →</a></div></div>`;
@@ -468,7 +470,29 @@ VIEWS.me = () => {
   <div class="card mt"><p class="sub" style="font-size:14px">Progress lives in this browser only. Export a JSON file to back it up or move it to another device, then import it there.</p>
     <div class="grid2 mt"><button class="key" data-act="export">Export JSON</button><button class="key" data-act="import">Import JSON</button></div>
     <button class="key ghost wide sm mt" data-act="reset">Reset all progress</button><input type="file" id="file" accept="application/json,.json" hidden></div>
-  <p class="sub mt mono" style="font-size:11px;text-align:center">${BANK.length} problems · every answer key numerically verified</p>`;
+  <p class="sub mt mono" style="font-size:11px;text-align:center">${BANK.length} problems · every answer key numerically verified</p>
+  ${credit()}`;
+};
+
+// ───────────── CREDITS ─────────────
+VIEWS.credits = () => {
+  const count = (pre) => BANK.filter((p) => (p.src || '').startsWith(pre)).length;
+  const own = BANK.filter((p) => !p.src).length;
+  const ref = (title, by, meta, n, note) => `<div class="card"><div class="eyebrow" style="color:var(--k-yellow)">${n} problem${n === 1 ? '' : 's'}</div>
+    <h3 class="ref-title">${title}</h3><div class="sub" style="font-size:14.5px">${by}</div><div class="sub mono" style="font-size:12px;margin-top:4px">${meta}</div>${note ? `<p class="sub" style="font-size:14px;margin-top:10px">${note}</p>` : ''}</div>`;
+  return `<button class="key ghost sm" data-act="nav" data-to="me">← Stats</button>
+  <div class="eyebrow mt">Credits</div><h1 class="h1">References</h1>
+  <p class="sub">The problems in this reviewer come from these sources. Every one was re-typeset and re-checked, and many were given new trap options. Any mistake in here is mine, not the authors'.</p>
+  <div class="stack mt">
+    ${ref('Calculus 1 — An AidYourMathm8 Mock Exam for A.Y. 2026–27', 'Created by <b>Elfred Vic V. Ignacio</b>', 'AYM (Aid Your Mathmate) event · PLM-Mathematical Society', count('AYM'),
+      'The boss tier. Items are tagged “AYM Mock Exam 26–27 #n”. The original workbook may only be distributed within the PLM-Mathematical Society; it is not included in this app.')}
+    ${ref('The Calculus 7 (TC7)', 'Louis Leithold', 'HarperCollins College Publishers', count('Leithold'), 'Chapters 5 and 12: exponential, logarithmic and hyperbolic functions; partial derivatives.')}
+    ${ref('Analytic Geometry and Calculus', 'Thurman S. Peterson', 'Harper &amp; Brothers, 1955', count('Peterson'), 'Articles on exponential, hyperbolic and partial derivatives.')}
+    ${ref('Original problems', 'Written for this reviewer', 'Modelled on the exam’s style and traps', own)}
+  </div>
+  <div class="mt-l eyebrow">Built with</div>
+  <div class="card mt"><p class="sub" style="font-size:14px"><b>KaTeX</b> (MIT) for the math · <b>Bricolage Grotesque</b> and <b>JetBrains Mono</b> (SIL Open Font License) for the type.</p></div>
+  <p class="credit">made by Gio</p>`;
 };
 function exportData() {
   const blob = new Blob([JSON.stringify({ app: 'calc1-all-in', ...S }, null, 2)], { type: 'application/json' });
