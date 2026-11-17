@@ -1,0 +1,10 @@
+{
+  "name": "calc1-all-in-reviewer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "verify": "node tools/verify.mjs js/data/bank-core-a.js js/data/bank-core-b.js js/data/bank-mock.js js/data/bank-leithold.js js/data/bank-peterson.js",
+    "dev": "npx serve -l 5173 ."
+  }
+}
