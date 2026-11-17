@@ -4,11 +4,12 @@ import mock from './data/bank-mock.js';
 import leithold from './data/bank-leithold.js';
 import peterson from './data/bank-peterson.js';
 import coreC from './data/bank-core-c.js';
+import coreD from './data/bank-core-d.js';
 import NOTA_EXTRA from './data/nota-extra.js';
 import { TOPICS, TECHS, TRAPS, LESSONS, REFERENCE, PLAYBOOK } from './data/content.js';
 import { evalProblem, close } from './mathenv.js';
 
-const BANK = [...coreA, ...coreB, ...coreC, ...mock, ...leithold, ...peterson];
+const BANK = [...coreA, ...coreB, ...coreC, ...coreD, ...mock, ...leithold, ...peterson];
 const BY_ID = Object.fromEntries(BANK.map((p) => [p.id, p]));
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view'), nav = $('#nav');
@@ -53,11 +54,10 @@ const TABS = [['home', 'Home'], ['train', 'Train'], ['arena', 'Arena'], ['vault'
 
 // ───────────── problem presentation ─────────────
 // Builds a shuffled presentation: 4 real choices in random order + E = None of the above.
+const asVariant = (p, ex) => ({ ...p, ch: p.ch.map((c, i) => (i === p.ans ? ex : c)), ans: 4, truth: [p.ch[p.ans][0], p.ch[p.ans][1]], variant: true });
 function present(p, allowVariant = false) {
   const ex = NOTA_EXTRA[p.id];
-  if (allowVariant && ex && p.ans !== 4 && Math.random() < 0.3) {
-    p = { ...p, ch: p.ch.map((c, i) => (i === p.ans ? ex : c)), ans: 4, truth: [p.ch[p.ans][0], p.ch[p.ans][1]], variant: true };
-  }
+  if (allowVariant && ex && p.ans !== 4 && Math.random() < 0.3) p = asVariant(p, ex);
   const order = shuffle([0, 1, 2, 3]);
   return { p, order, correct: p.ans === 4 ? 4 : order.indexOf(p.ans) };
 }
@@ -174,6 +174,7 @@ VIEWS.home = () => {
     </div>
     <div class="pace" style="margin-top:16px"><i style="width:${Math.min(100, (lessonsDone() / LESSONS.length) * 50 + (t.n ? acc / 2 : 0))}%;transition:none"></i></div>
   </div>
+  ${resumeCard()}
   <div class="stack mt">
     ${next ? `<button class="card tap" data-act="lesson" data-id="${next.id}"><div class="eyebrow" style="color:var(--k-yellow)">${lessonsDone() ? 'Continue training' : 'Start here'}</div><div class="h2" style="margin-top:8px">${next.id.slice(1)} · ${esc(next.title)}</div><p class="sub" style="margin-top:4px">${esc(next.sub)} · ~${next.time} min</p></button>` : `<button class="card tap" data-act="nav" data-to="arena"><div class="eyebrow" style="color:var(--ok)">Curriculum complete</div><div class="h2" style="margin-top:8px">Run a full 40-item exam</div></button>`}
     <div class="grid2">
@@ -265,6 +266,7 @@ const MODE_INFO = {
 VIEWS.arena = () => {
   const best = S.runs.filter((r) => r.mode === setup.mode && !r.exam).sort((a, b) => b.score / b.n - a.score / a.n)[0];
   return `<div class="eyebrow">Exam simulation</div><h1 class="h1">Arena</h1>
+  ${resumeCard()}
   <div class="seg mt">${['easy', 'medium', 'hard', 'endless'].map((m) => `<button data-act="mode" data-m="${m}" data-tone="${m}" class="${!setup.exam && setup.mode === m ? 'on' : ''}">${m}</button>`).join('')}</div>
   <p class="sub mt" style="min-height:46px">${setup.exam ? 'Full simulation: 40 mixed items, one 120:00 countdown, answers revealed only at the end. Exactly like the real thing.' : MODE_INFO[setup.mode]}</p>
   ${setup.exam ? '' : `<div class="row mt" style="flex-wrap:wrap;gap:6px"><button class="chip ${!setup.topic ? 'on' : ''}" data-act="topic" data-t="">All topics</button>${Object.entries(TOPICS).map(([id, tp]) => `<button class="chip ${setup.topic === id ? 'on' : ''}" data-act="topic" data-t="${id}">${tp.name}</button>`).join('')}</div>`}
@@ -301,9 +303,33 @@ function nextEndless(used, n) {
     if (!c) { used.clear(); c = pickPool([d], 1, used)[0] || pickPool([1, 2, 3], 1, used)[0]; } if (!c) break; used.add(c.id); out.push(c); }
   return out;
 }
+const RUN_KEY = 'calc1.allin.run';
+function saveRun() {
+  try { localStorage.setItem(RUN_KEY, JSON.stringify({ mode: ctx.mode, exam: ctx.exam, endless: ctx.endless, instant: ctx.instant, qs: ctx.qs.map((q) => q.id), used: [...ctx.used], elapsed: performance.now() - ctx.start, at: Date.now(),
+    ans: ctx.ans.map((a) => ({ id: a.id, ok: a.ok, ms: a.ms, picked: a.picked, trap: a.trap, order: a.pr.order, correct: a.pr.correct, variant: !!a.pr.p.variant })) })); } catch {}
+}
+const clearRun = () => { try { localStorage.removeItem(RUN_KEY); } catch {} };
+function savedRun() { try { const d = JSON.parse(localStorage.getItem(RUN_KEY)); return d && d.ans?.length ? d : null; } catch { return null; } }
+function resumeRun() {
+  const d = savedRun(); if (!d) return go('arena');
+  const qs = d.qs.map((id) => BY_ID[id]).filter(Boolean);
+  const ans = d.ans.filter((a) => BY_ID[a.id]).map((a) => { const base = BY_ID[a.id], ex = NOTA_EXTRA[a.id];
+    return { id: a.id, ok: a.ok, ms: a.ms, picked: a.picked, trap: a.trap, pr: { p: a.variant && ex ? asVariant(base, ex) : base, order: a.order, correct: a.correct } }; });
+  const used = new Set(d.used), i = ans.length;
+  if (d.endless && i >= qs.length) qs.push(...nextEndless(used, 8));
+  const c = { mode: d.mode, exam: d.exam, endless: d.endless, qs, used, i, ans, instant: d.instant, start: performance.now() - d.elapsed, t0: performance.now() };
+  if (i >= qs.length) { ctx = c; return finishRun(); }
+  go('run', { ...c, pr: present(qs[i], true) });
+}
+function resumeCard() {
+  const d = savedRun(); if (!d) return '';
+  const total = d.endless ? '∞' : d.qs.length, left = d.exam ? ` · ${fmtT(Math.max(0, 7200 - d.elapsed / 1000))} left` : '';
+  return `<div class="card mt" style="border-color:#f4b93a88"><div class="eyebrow" style="color:var(--k-yellow)">Run in progress</div><div class="h2" style="margin-top:6px">${d.exam ? 'Exam' : d.mode[0].toUpperCase() + d.mode.slice(1)} · ${d.ans.length}/${total} answered${left}</div><div class="grid2 mt"><button class="key ghost sm" data-act="discard">Discard</button><button class="key yellow sm" data-act="resume">Resume</button></div></div>`;
+}
 function startRun(mode, len, exam) {
   const qs = buildQs(mode, len, exam);
   if (!qs.length) return toast('No problems match that filter');
+  clearRun();
   go('run', { mode, exam, endless: mode === 'endless' && !exam, qs, used: new Set(qs.map((q) => q.id)), i: 0, ans: [], pr: present(qs[0], true), t0: performance.now(), start: performance.now(), instant: exam ? false : S.settings.instant });
 }
 VIEWS.run = () => {
@@ -332,6 +358,7 @@ function lockAnswer(picked) {
   let trap = null;
   if (!ok) trap = picked == null ? 'time' : p.ans === 4 ? 'nota' : trapOf(p, orig).tag;
   ctx.ans.push({ id: p.id, ok, ms, picked, trap, pr });
+  saveRun();
   record(p, ok, ms, trap);
   if (ctx.instant) { ctx.picked = picked; ctx.ms = ms; ctx.reveal = true; render(); } else advance();
 }
@@ -344,6 +371,7 @@ function advance() {
 }
 function finishRun() {
   clearInterval(tick);
+  clearRun();
   const a = ctx.ans; if (!a.length) return go('arena');
   const run = { at: Date.now(), mode: ctx.mode, exam: ctx.exam, n: a.length, score: a.filter((x) => x.ok).length, totalMs: a.reduce((s, x) => s + x.ms, 0) };
   S.runs.push(run); S.runs = S.runs.slice(-40); save();
@@ -356,7 +384,7 @@ VIEWS.results = () => {
   ans.forEach((x) => { const p = BY_ID[x.id]; const b = (byTopic[p.topic] ||= { n: 0, c: 0, ms: 0 }); b.n++; b.ms += x.ms; if (x.ok) b.c++; if (x.trap) traps[x.trap] = (traps[x.trap] || 0) + 1; });
   if (over >= Math.max(2, run.n * 0.2)) traps.time = Math.max(traps.time || 0, over);
   const proj = Math.round(avg * 40 / 60);
-  const verdict = acc >= 85 && avg <= TARGET ? 'Exam-ready pace and accuracy. Raise the difficulty.' : acc >= 85 ? 'Accurate, but you are paying for it in time. Prune before you compute.' : avg <= TARGET ? 'Fast, but leaking points. Slow down 10 seconds for the sign and chain scan.' : 'Both speed and accuracy need work — go back through the lessons flagged below.';
+  const verdict = acc < 50 && avg < 45 ? 'That was guessing speed. Slow down: run triage, prune, verify on every item before you lock in.' : acc >= 85 && avg <= TARGET ? 'Exam-ready pace and accuracy. Raise the difficulty.' : acc >= 85 ? 'Accurate, but you are paying for it in time. Prune before you compute.' : avg <= TARGET ? 'Fast, but leaking points. Slow down 10 seconds for the sign and chain scan.' : 'Both speed and accuracy need work — go back through the lessons flagged below.';
   const slow = ans.slice().sort((a, b) => b.ms - a.ms).slice(0, 3);
   return `<div class="eyebrow">${run.exam ? 'Exam simulation' : run.mode + ' run'} · complete</div>
   <div class="lcd mt"><div class="lcd-row"><span>Score</span><span>${acc}%</span></div>
@@ -469,6 +497,8 @@ const ACT = {
   set: (d) => { S.settings[d.k] = !S.settings[d.k]; save(); render(); },
   start: () => startRun(setup.mode, setup.len, setup.exam),
   redo: () => startRun('redo', 20, false),
+  resume: () => resumeRun(),
+  discard: () => { clearRun(); render(); },
   quick: (d) => startRun(d.mode, 10, false),
   recon: () => startRecon(),
   rpick: (d) => { if (ctx.done) return; clearInterval(tick); const p = ctx.qs[ctx.i], ok = d.k === p.tech; ctx.pick = d.k; ctx.done = true; if (ok) ctx.score++; ctx.log.push({ p, ok }); render(); },
@@ -500,7 +530,6 @@ document.addEventListener('keydown', (e) => {
   } else if (route === 'recon') { if (idx >= 0 && idx < 4 && !ctx.done && ctx.opts) ACT.rpick({ k: ctx.opts[idx] }); else if ((k === 'enter' || k === ' ') && ctx.done) { e.preventDefault(); ACT.rnext(); } }
   else if (route === 'flash') { if (k === ' ' || k === 'enter') { e.preventDefault(); ACT.flip(); } else if (ctx.flip && '1234'.includes(k)) ACT.rate({ r: +k - 1 }); }
 });
-window.addEventListener('beforeunload', (e) => { if (route === 'run' && ctx.ans?.length) e.preventDefault(); });
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) navigator.serviceWorker.register('sw.js').catch(() => {});
 go('home');

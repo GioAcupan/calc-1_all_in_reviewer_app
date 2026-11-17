@@ -117,7 +117,9 @@ Multiply the bracket by $k$, add the $x$-coefficient. Repeat $n$ times — no pr
 Calculator note: the fx-991ES cannot nest $\frac{d}{dx}$. For a second derivative, do the first by hand (leave it ugly) and put *that* inside $\frac{d}{dx}$.` },
     { t: 'try', pid: 'E08' },
     { t: 'try', pid: 'E07' },
+    { t: 'try', pid: 'D02' },
     { t: 'try', pid: 'C03' },
+    { t: 'try', pid: 'D08' },
   ] },
   { id: 'L4', title: 'Hyperbolic Traps', sub: 'No-drop exponents · identity collapses', time: 8, cards: [
     { t: 'note', h: 'The exponent that never drops', b: r`$\dfrac{d}{dx}\operatorname{sech}u=-\operatorname{sech}u\tanh u\cdot u'$ hands a $\operatorname{sech}u$ back. So
@@ -144,7 +146,9 @@ $\operatorname{sech}^{-1}u=\cosh^{-1}\!\left(\tfrac1u\right)$ · $\operatorname{
 Hyperbolic of a logarithm is secretly algebra: $e^{\ln x}=x$.` },
     { t: 'try', pid: 'H06' },
     { t: 'try', pid: 'C09' },
+    { t: 'try', pid: 'D11' },
     { t: 'try', pid: 'H13' },
+    { t: 'try', pid: 'D01' },
   ] },
   { id: 'L5', title: 'Inverse Hyperbolic', sub: 'Three facts · twins · the telescope', time: 9, cards: [
     { t: 'note', h: 'Six formulas, three questions', b: r`For each: **root or no root? plus or minus one? sign?**
@@ -185,6 +189,7 @@ $\operatorname{sech}^{-1}(\cos u)\to+u'\sec u$ · $\operatorname{sech}^{-1}(\sin
     { t: 'xray', pid: 'Q16' },
     { t: 'try', pid: 'Q02' },
     { t: 'try', pid: 'M35' },
+    { t: 'try', pid: 'D16' },
     { t: 'note', h: 'Clairaut: the order is yours', b: r`$f_{xy}=f_{yx}$. When a mixed partial contains a monster that depends on one variable only, differentiate by the **other** variable first and the monster is gone.
 
 After the first partial, the "constant" you pulled out often becomes the live variable — the second step is usually a product rule.` },
@@ -203,6 +208,7 @@ The options will differ by sign placement: $-\dfrac{A}{1-y}=\dfrac{A}{y-1}$.
     { t: 'try', pid: 'C27' },
     { t: 'try', pid: 'F01' },
     { t: 'try', pid: 'C45' },
+    { t: 'try', pid: 'D20' },
     { t: 'try', pid: 'E11' },
   ] },
   { id: 'L7', title: 'Limits in 10 Seconds', sub: 'Form check · small-angle · exponential forms', time: 8, cards: [
@@ -272,6 +278,7 @@ For partials at a point, plug in zeros early where it is legal: a factor that be
     { t: 'try', pid: 'M07' },
     { t: 'try', pid: 'M38' },
     { t: 'try', pid: 'M21' },
+    { t: 'try', pid: 'D17' },
     { t: 'try', pid: 'M04' },
     { t: 'try', pid: 'M23' },
   ] },
@@ -312,13 +319,13 @@ export const REFERENCE = [
     F(r`\dfrac{d}{dx}\sinh^{-1}u`, r`\dfrac{u'}{\sqrt{u^2+1}}`, 'All real u'), F(r`\dfrac{d}{dx}\cosh^{-1}u`, r`\dfrac{u'}{\sqrt{u^2-1}}`, 'u > 1'),
     F(r`\dfrac{d}{dx}\tanh^{-1}u`, r`\dfrac{u'}{1-u^2}`, '|u| < 1'), F(r`\dfrac{d}{dx}\coth^{-1}u`, r`\dfrac{u'}{1-u^2}`, '|u| > 1 — denominator is negative'),
     F(r`\dfrac{d}{dx}\operatorname{sech}^{-1}u`, r`-\dfrac{u'}{u\sqrt{1-u^2}}`), F(r`\dfrac{d}{dx}\operatorname{csch}^{-1}u`, r`-\dfrac{u'}{|u|\sqrt{1+u^2}}`),
-    F(r`\sinh^{-1}u\text{ (log form)}`, r`\ln\!\left(u+\sqrt{u^2+1}\right)`), F(r`\cosh^{-1}u\text{ (log form)}`, r`\ln\!\left(u+\sqrt{u^2-1}\right)`),
-    F(r`\tanh^{-1}u\text{ (log form)}`, r`\tfrac12\ln\dfrac{1+u}{1-u}`),
+    F(r`\sinh^{-1}u=\ ?`, r`\ln\!\left(u+\sqrt{u^2+1}\right)`, 'Log form'), F(r`\cosh^{-1}u=\ ?`, r`\ln\!\left(u+\sqrt{u^2-1}\right)`, 'Log form'),
+    F(r`\tanh^{-1}u=\ ?`, r`\tfrac12\ln\dfrac{1+u}{1-u}`, 'Log form'),
     F(r`\dfrac{d}{dx}\tanh^{-1}(\sin u)`, r`u'\sec u`), F(r`\dfrac{d}{dx}\sinh^{-1}(\tan u)`, r`u'\sec u`),
     F(r`\dfrac{d}{dx}\operatorname{sech}^{-1}(\cos u)`, r`+u'\sec u`, 'Double negative'), F(r`\dfrac{d}{dx}\operatorname{sech}^{-1}(\sin u)`, r`-u'\csc u`),
     F(r`\dfrac{d}{dx}\tan^{-1}(\sinh u)`, r`u'\operatorname{sech}u`),
     F(r`\dfrac{d}{dx}\left[x\cosh^{-1}(ax)-\tfrac1a\sqrt{a^2x^2-1}\right]`, r`\cosh^{-1}(ax)`, 'Telescope'),
-    F(r`\operatorname{sech}^{-1}u\text{ on fx-991ES}`, r`\cosh^{-1}(1\div u)`), F(r`\coth^{-1}u\text{ on fx-991ES}`, r`\tanh^{-1}(1\div u)`),
+    F(r`\operatorname{sech}^{-1}u=\ ?`, r`\cosh^{-1}(1\div u)`, 'How to type it on the fx-991ES'), F(r`\coth^{-1}u=\ ?`, r`\tanh^{-1}(1\div u)`, 'How to type it on the fx-991ES'),
   ] },
   { id: 'limits', title: 'Limits toolkit', rows: [
     F(r`\sin u,\tan u,\sinh u,\tanh u\ (u\to0)`, r`\approx u`), F(r`\ln(1+u),\ e^u-1\ (u\to0)`, r`\approx u`),
