@@ -124,10 +124,10 @@ function explainHTML(pr, picked, ms) {
   const truth = p.ans === 4 ? `<div class="fb-sec"><div class="eyebrow">Actual answer</div><div class="scroll-x">${tex(p.truth ? p.truth[0] : '')}</div></div>` : '';
   return `<div class="feedback ${ok ? 'ok' : 'no'}">
     <div class="row between"><div class="verdict ${ok ? 'ok' : 'no'}">${ok ? '✓ Correct' : picked == null ? '— Skipped' : '✕ Not quite'}</div>${speed}</div>
-    <div class="fb-sec"><div class="eyebrow">The move · ${esc(t.name)}</div><div>${rich(p.xr || t.move)}</div></div>
+    <div class="fb-sec"><div class="eyebrow">The move · ${esc(t.name)}</div><div>${rich(LH[p.id] ? t.move : p.xr || t.move)}</div></div>
     ${truth}
     ${LH[p.id] ? `<div class="fb-sec"><div class="eyebrow">L'Hôpital route · what you were taught</div><div class="scroll-x">${rich(LH[p.id])}</div></div>` : ''}
-    <div class="fb-sec"><div class="eyebrow">${LH[p.id] ? 'Shortcut · optional' : 'Fast path'}</div><div class="scroll-x">${rich(p.sol)}${p.variant ? '<br><b>That expression was not among the options this time ⇒ None of the above.</b>' : ''}</div></div>
+    <div class="fb-sec"><div class="eyebrow">${LH[p.id] ? 'Shortcut · optional' : 'Fast path'}</div><div class="scroll-x">${LH[p.id] && p.xr ? rich(p.xr) + '<br>' : ''}${rich(p.sol)}${p.variant ? '<br><b>That expression was not among the options this time ⇒ None of the above.</b>' : ''}</div></div>
     ${p.calc ? `<div class="fb-sec"><div class="eyebrow">Calculator</div><div>${rich(p.calc)}</div></div>` : ''}
     ${tp ? `<div class="fb-sec"><div class="eyebrow">Calculator tape</div><div class="tape">${tp}</div></div>` : ''}
     <div class="fb-sec row" style="flex-wrap:wrap;gap:6px"><span class="chip">${TOPICS[p.topic].name}</span><span class="chip">${['', 'Easy', 'Medium', 'Hard'][p.diff]}</span>${p.src ? `<span class="chip">${esc(p.src)}</span>` : ''}</div>
@@ -156,7 +156,6 @@ function go(r, c = {}) {
 }
 function render() { view.innerHTML = `<div class="fade">${VIEWS[route]()}</div>`; AFTER[route]?.(); }
 const VIEWS = {}, AFTER = {};
-const LIM_TITLE = REFERENCE.find((s) => s.id === 'limits').title;
 
 // ───────────── aggregate stats ─────────────
 function totals() {
@@ -223,16 +222,16 @@ VIEWS.lesson = () => {
   const l = LESSONS.find((x) => x.id === ctx.id), i = ctx.i ?? 0, c = l.cards[i];
   let body = '';
   if (c.t === 'note') body = `<div class="note"><div class="eyebrow">Lesson ${l.id.slice(1)} · ${esc(l.title)}</div><h2 style="margin-top:10px">${rich(c.h)}</h2><div class="prose"><p>${rich(c.b)}</p></div></div>`;
-  else if (c.t === 'xray') { const p = BY_ID[c.pid], t = TECHS[p.tech];
+  else if (c.t === 'xray') { const p = BY_ID[c.pid], t = c.move ? { name: c.move[0], move: c.move[1] } : TECHS[p.tech];
     body = `<div class="eyebrow">X-ray · where your eyes go first</div>
-    <div class="lcd mt"><div class="lcd-row"><span>Structure scan</span><span>${TOPICS[p.topic].short}</span></div>${stemHTML(p, true)}${legend()}<div class="xr-note">${rich(p.xr || t.move)}</div></div>
+    <div class="lcd mt"><div class="lcd-row"><span>Structure scan</span><span>${TOPICS[p.topic].short}</span></div>${stemHTML(p, true)}${legend()}<div class="xr-note">${rich(c.xr || p.xr || t.move)}</div></div>
     <div class="card mt"><div class="eyebrow" style="color:var(--k-yellow)">The move</div><div class="h2" style="margin-top:8px">${esc(t.name)}</div><p class="sub" style="margin-top:4px">${esc(t.move)}</p></div>`; }
-  else { ctx.pr ||= present(BY_ID[c.pid]); ctx.t0 ||= performance.now(); const pr = ctx.pr, p = pr.p, done = ctx.picked != null && ctx.reveal;
+  else { ctx.pr ||= present(BY_ID[c.pid]); ctx.t0 ||= performance.now(); const pr = ctx.pr, p = pr.p, done = ctx.picked != null && ctx.reveal, hints = c.hints || p.hints || [];
     body = `<div class="row between"><div class="eyebrow">Guided practice</div><span class="chip">${['', 'Easy', 'Medium', 'Hard'][p.diff]}</span></div>
     <div class="lcd mt"><div class="lcd-row"><span>${TOPICS[p.topic].name}</span><span>${esc(p.src || 'Designed')}</span></div>${stemHTML(p, (ctx.hints || 0) > 0 || done)}</div>
-    ${(p.hints || []).slice(0, ctx.hints || 0).map((h, k) => `<div class="hint"><span class="eyebrow" style="color:var(--k-yellow)">Hint ${k + 1}</span><div style="margin-top:6px">${rich(h)}</div></div>`).join('')}
+    ${hints.slice(0, ctx.hints || 0).map((h, k) => `<div class="hint"><span class="eyebrow" style="color:var(--k-yellow)">Hint ${k + 1}</span><div style="margin-top:6px">${rich(h)}</div></div>`).join('')}
     ${choicesHTML(pr, { picked: ctx.picked, reveal: ctx.reveal })}
-    ${done ? explainHTML(pr, ctx.picked, ctx.ms) : `<div class="row mt"><button class="key ghost sm" data-act="hint" ${(ctx.hints || 0) >= (p.hints || []).length ? 'disabled' : ''}>Hint ${(ctx.hints || 0) + 1 > (p.hints || []).length ? '' : (ctx.hints || 0) + 1}/${(p.hints || []).length}</button><span class="sub" style="font-size:13px">Hints switch on the X-ray.</span></div>`}`; }
+    ${done ? explainHTML(pr, ctx.picked, ctx.ms) : `<div class="row mt"><button class="key ghost sm" data-act="hint" ${(ctx.hints || 0) >= hints.length ? 'disabled' : ''}>Hint ${(ctx.hints || 0) + 1 > hints.length ? '' : (ctx.hints || 0) + 1}/${hints.length}</button><span class="sub" style="font-size:13px">Hints switch on the X-ray.</span></div>`}`; }
   const canNext = c.t !== 'try' || ctx.reveal;
   return `<div class="hud"><button class="key ghost sm" data-act="nav" data-to="train" aria-label="Exit lesson">✕</button><div class="dots">${l.cards.map((_, k) => `<i class="${k === i ? 'on' : k < i ? 'past' : ''}"></i>`).join('')}</div><span class="count">${i + 1}/${l.cards.length}</span></div>
   ${body}
@@ -419,7 +418,7 @@ VIEWS.results = () => {
 function revRow(x, i) { const p = BY_ID[x.id]; return `<button class="rev" data-act="rev" data-i="${i}"><span class="mk ${x.ok ? 'ok' : 'no'}">${i + 1}</span><span class="q">${TOPICS[p.topic].short} · ${esc(TECHS[p.tech]?.name || '')}</span><span class="t ${x.ms / 1000 > TARGET ? 'red' : ''}">${fmtT(x.ms / 1000)}</span></button>`; }
 
 // ───────────── VAULT ─────────────
-const DECK = [...REFERENCE.flatMap((s) => s.rows.map((r, i) => ({ id: `${s.id}-${i}`, sec: s.title, q: r.q, a: r.a, note: r.note }))),
+const DECK = [...REFERENCE.filter((s) => !s.noCards).flatMap((s) => s.rows.map((r, i) => ({ id: `${s.id}-${i}`, sec: s.title, q: r.q, a: r.a, note: r.note }))),
   ...Object.entries(TECHS).filter(([k]) => k !== 'direct').map(([k, t]) => ({ id: 'tech-' + k, sec: 'Technique', text: true, q: t.name, a: t.move }))];
 VIEWS.vault = () => {
   const tab = ctx.tab || 'formulas', due = deck().filter((c) => (S.srs[c.id]?.due || 0) <= Date.now()).length;
@@ -431,12 +430,11 @@ VIEWS.vault = () => {
   else body = `<div class="lcd mt" style="text-align:center"><div class="lcd-row"><span>Flashcards</span><span>${deck().length} cards</span></div><div class="score-big" style="position:relative;z-index:1;font-size:72px">${due}<small> due</small></div></div>
     <p class="sub mt">Every formula, identity and technique in the Vault, scheduled by spaced repetition. Cards you miss come back today; cards you know drift out to days and weeks.</p>
     <button class="key yellow wide mt" style="min-height:56px" data-act="flash" ${due ? '' : 'disabled'}>${due ? `Review ${Math.min(due, 20)} cards` : 'All caught up'}</button>
-    ${due ? '' : `<button class="key wide mt" data-act="flash" data-all="1">Practice anyway</button>`}
-    <div class="card mt" style="padding:4px 16px"><div class="opt"><div><b>Include limit shortcuts</b><small>Small-angle swaps and series terms. Optional: every limit can be done with L'Hôpital or CALC.</small></div><button class="switch ${S.settings.noLimCards ? '' : 'on'}" data-act="set" data-k="noLimCards" role="switch" aria-checked="${!S.settings.noLimCards}" aria-label="Include limit shortcuts"></button></div></div>`;
+    ${due ? '' : `<button class="key wide mt" data-act="flash" data-all="1">Practice anyway</button>`}`;
   return `<div class="eyebrow">Appendix</div><h1 class="h1">Vault</h1>
   <div class="seg mt">${[['formulas', 'Formulas'], ['playbook', 'Playbook'], ['flash', `Cards${due ? ' · ' + due : ''}`]].map(([k, l]) => `<button data-act="vtab" data-k="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>${body}`;
 };
-const deck = () => (S.settings.noLimCards ? DECK.filter((c) => c.sec !== LIM_TITLE) : DECK);
+const deck = () => DECK;
 function startFlash(all) {
   const now = Date.now();
   let q = shuffle(deck().filter((c) => all || (S.srs[c.id]?.due || 0) <= now)).slice(0, 20);

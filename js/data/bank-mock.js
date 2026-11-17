@@ -68,7 +68,7 @@ const items = [
     xr: r`$e^{2x}-2e^x+1=(e^x-1)^2$. Perfect square in disguise. The subtracted $x^2+x^3$ are exactly its first two terms ⇒ you need the $x^4$ coefficient.`,
     hints: [r`$(e^x-1)^2=\left(x+\tfrac{x^2}{2}+\tfrac{x^3}{6}\right)^2$.`, r`$x^4$ coefficient: $\tfrac14+2\cdot\tfrac16$.`],
     sol: r`$(e^x-1)^2=x^2+x^3+\tfrac{7}{12}x^4+\dots$, so the limit is $\tfrac{7}{12}$.`,
-    calc: r`CALC at $X=0.01$ gives $\approx0.589$; at $0.001$ it turns to garbage. Closest option to $0.58$ wins.` },
+    calc: r`CALC at $X=0.01$ gives $0.586$, and $\tfrac{7}{12}=0.583$. Go much closer than $0.001$ and the digits run out.` },
 
   { id: 'M09', num: 9, topic: 'lhopital', diff: 3, tech: 'taylor', kind: 'lim', to: 'inf',
     stem: r`Evaluate $\displaystyle\lim_{x\to\infty}x^4\left[\hlo{e^{2/x}}-1-\dfrac2x-\dfrac{2}{x^2}-\dfrac{4}{3x^3}\right]$.`, f: 'x**4*(exp(2/x)-1-2/x-2/x**2-4/(3*x**3))',

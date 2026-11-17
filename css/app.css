@@ -100,7 +100,8 @@ h1, h2, h3, p { margin: 0; }
 .choice:active { transform: translateY(3px); box-shadow: 0 0 0 #0a0b0e; }
 .choice .cap { width: 38px; height: 38px; border-radius: 9px; display: grid; place-items: center; font: 800 14px var(--mono); background: #2c313b; color: var(--ink-2); box-shadow: inset 0 1px 0 #ffffff14; }
 .choice .body { overflow-x: auto; overflow-y: hidden; padding: 3px 0; font-size: 16px; min-width: 0; }
-.choice .body, .stem, .scroll-x, .ref-row > div, .flash .big, .tape { scrollbar-width: none; }
+.choice .body, .stem, .scroll-x, .ref-row > div, .flash .big, .tape, .katex-display { scrollbar-width: none; }
+.katex-display::-webkit-scrollbar { display: none; }
 .choice .body::-webkit-scrollbar, .stem::-webkit-scrollbar, .scroll-x::-webkit-scrollbar, .ref-row > div::-webkit-scrollbar, .flash .big::-webkit-scrollbar, .tape::-webkit-scrollbar { display: none; }
 .choice .val { grid-column: 2; font: 600 11px var(--mono); color: var(--ink-3); margin-top: -4px; }
 .choice.picked { border-color: var(--k-yellow); background: #f4b93a12; }
