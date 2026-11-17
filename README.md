@@ -13,4 +13,4 @@ Static site, no build step. Locally: `python -m http.server 5173` then open http
 
 ## Problem bank
 
-157 problems in `js/data/bank-*.js`. Each carries a JS expression for the function and for every option; `node tools/verify.mjs js/data/bank-*.js` differentiates / takes limits numerically and checks every answer key and distractor. The same expressions power the in-app "calculator tape".
+211 problems (plus 30 "None of the above" variants) in `js/data/bank-*.js`. Each carries a JS expression for the function and for every option; `node tools/verify.mjs js/data/bank-*.js` differentiates / takes limits numerically and checks every answer key and distractor. The same expressions power the in-app "calculator tape".

@@ -86,6 +86,34 @@ export function evalProblem(p, alt = false) {
     }
     pt = [x, y, 0];
     truth = ok ? -Fx(...pt) / Fy(...pt) : NaN;
+  } else if (p.kind === 'imp2') {
+    // second implicit derivative d²y/dx² on the curve F(x, y) = 0
+    const Fy = partial(g, 'y'), Fx = partial(g, 'x');
+    let [x, y] = pt, ok = false;
+    for (const start of [y, 1, 0.5, -1, 3, 0.2, -2.5]) {
+      let yy = start;
+      for (let i = 0; i < 60; i++) { const d = g(x, yy, 0) / Fy(x, yy, 0); yy -= d; if (!Number.isFinite(yy)) break; }
+      if (Number.isFinite(yy) && Math.abs(g(x, yy, 0)) < 1e-9) { y = yy; ok = true; break; }
+    }
+    pt = [x, y, 0];
+    const a = Fx(...pt), b = Fy(...pt), xx = partial(g, 'xx')(...pt), xy = partial(g, 'xy')(...pt), yy2 = partial(g, 'yy')(...pt);
+    truth = ok ? -(xx * b * b - 2 * xy * a * b + yy2 * a * a) / (b * b * b) : NaN;
+  } else if (p.kind === 'impz') {
+    // ∂z/∂x on the surface F(x, y, z) = 0
+    const Fz = partial(g, 'z'), Fx = partial(g, 'x');
+    let [x, y, z] = pt, ok = false;
+    for (const start of [z, 1, -0.5, 3, 0.2, -2]) {
+      let zz = start;
+      for (let i = 0; i < 60; i++) { const d = g(x, y, zz) / Fz(x, y, zz); zz -= d; if (!Number.isFinite(zz)) break; }
+      if (Number.isFinite(zz) && Math.abs(g(x, y, zz)) < 1e-9) { z = zz; ok = true; break; }
+    }
+    pt = [x, y, z];
+    truth = ok ? -Fx(...pt) / Fz(...pt) : NaN;
+  } else if (p.kind === 'euler') {
+    // x·f_x + y·f_y ; choices may refer to the function value as z
+    const [x, y] = pt;
+    truth = x * partial(g, 'x')(x, y) + y * partial(g, 'y')(x, y);
+    pt = [x, y, g(x, y)];
   } else if (p.kind === 'lim') {
     truth = limitEstimate((x) => g(x, 0, 0), p.to, p.side);
     pt = [];

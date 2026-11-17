@@ -117,6 +117,7 @@ Multiply the bracket by $k$, add the $x$-coefficient. Repeat $n$ times — no pr
 Calculator note: the fx-991ES cannot nest $\frac{d}{dx}$. For a second derivative, do the first by hand (leave it ugly) and put *that* inside $\frac{d}{dx}$.` },
     { t: 'try', pid: 'E08' },
     { t: 'try', pid: 'E07' },
+    { t: 'try', pid: 'C03' },
   ] },
   { id: 'L4', title: 'Hyperbolic Traps', sub: 'No-drop exponents · identity collapses', time: 8, cards: [
     { t: 'note', h: 'The exponent that never drops', b: r`$\dfrac{d}{dx}\operatorname{sech}u=-\operatorname{sech}u\tanh u\cdot u'$ hands a $\operatorname{sech}u$ back. So
@@ -142,6 +143,7 @@ $\operatorname{sech}^{-1}u=\cosh^{-1}\!\left(\tfrac1u\right)$ · $\operatorname{
 
 Hyperbolic of a logarithm is secretly algebra: $e^{\ln x}=x$.` },
     { t: 'try', pid: 'H06' },
+    { t: 'try', pid: 'C09' },
     { t: 'try', pid: 'H13' },
   ] },
   { id: 'L5', title: 'Inverse Hyperbolic', sub: 'Three facts · twins · the telescope', time: 9, cards: [
@@ -171,6 +173,8 @@ $\operatorname{sech}^{-1}(\cos u)\to+u'\sec u$ · $\operatorname{sech}^{-1}(\sin
     { t: 'xray', pid: 'I05' },
     { t: 'try', pid: 'I06' },
     { t: 'try', pid: 'I11' },
+    { t: 'try', pid: 'C16' },
+    { t: 'try', pid: 'C17' },
   ] },
   { id: 'L6', title: 'Partials & Implicit', sub: 'Dead terms · Clairaut · Euler · −Fx/Fy', time: 9, cards: [
     { t: 'note', h: 'Find what dies first', b: r`The subscript names the only live variable. Before any calculus, find the terms that contain **no** live variable — they vanish, however ugly.
@@ -196,12 +200,15 @@ The options will differ by sign placement: $-\dfrac{A}{1-y}=\dfrac{A}{y-1}$.
 **Calculator for $f_y$:** swap roles — type $X$ where $y$ is, $Y$ where $x$ is, and differentiate at $X=2.13$.` },
     { t: 'try', pid: 'Q07' },
     { t: 'try', pid: 'Q13' },
+    { t: 'try', pid: 'C27' },
     { t: 'try', pid: 'F01' },
+    { t: 'try', pid: 'C45' },
     { t: 'try', pid: 'E11' },
   ] },
   { id: 'L7', title: 'Limits in 10 Seconds', sub: 'Form check · small-angle · exponential forms', time: 8, cards: [
     { t: 'note', h: 'Step zero: plug in', b: r`Substitute the point first. If you get a number, or $\dfrac{0}{2}$, or $\dfrac{3}{0}$ — it is **not** indeterminate and L'Hôpital gives a wrong answer. Examiners plant these on purpose. Read *where* $x$ is going.` },
     { t: 'xray', pid: 'X08' },
+    { t: 'try', pid: 'C39' },
     { t: 'note', h: 'Small-angle swap', b: r`As $u\to0$, inside products and quotients only:
 
 $\sin u,\ \tan u,\ \sinh u,\ \tanh u,\ \sin^{-1}u,\ \tan^{-1}u,\ \ln(1+u),\ e^u-1\ \longrightarrow\ u$
@@ -220,6 +227,7 @@ $u$ can be anything that goes to $0$: $3x$, $\tfrac{4}{x-1}$, even $x-\sin x$.` 
     { t: 'try', pid: 'X06' },
     { t: 'try', pid: 'X07' },
     { t: 'try', pid: 'X09' },
+    { t: 'try', pid: 'C35' },
   ] },
   { id: 'L8', title: 'Calculator-Proof Limits', sub: 'When CALC lies: Taylor to 4th order', time: 9, cards: [
     { t: 'note', h: 'Why the calculator breaks', b: r`The mock exam is full of limits like $\dfrac{\cosh x-1-\frac{x^2}{2}}{x^4}$. At $x=10^{-5}$ the numerator is $\sim10^{-22}$, far below the 15 digits the fx-991ES carries: it displays $0$ or garbage.
@@ -233,7 +241,7 @@ $\sin u=u-\dfrac{u^3}{6}$ · $\sinh u=u+\dfrac{u^3}{6}$
 
 $\cos u=1-\dfrac{u^2}{2}+\dfrac{u^4}{24}$ · $\cosh u=1+\dfrac{u^2}{2}+\dfrac{u^4}{24}$
 
-$\tan u=u+\dfrac{u^3}{3}$ · $\tanh u=u-\dfrac{u^3}{3}$ · $\tan^{-1}u=u-\dfrac{u^3}{3}$
+$\tan u=u+\dfrac{u^3}{3}$ · $\tanh u=u-\dfrac{u^3}{3}$ · $\tan^{-1}u=u-\dfrac{u^3}{3}$ · $\sin^{-1}u=u+\dfrac{u^3}{6}$
 
 $\ln(1+u)=u-\dfrac{u^2}{2}+\dfrac{u^3}{3}-\dfrac{u^4}{4}$
 
@@ -244,6 +252,8 @@ Hyperbolic = trig with all plus signs. $\ln$ uses $\tfrac1n$, not $\tfrac1{n!}$.
     { t: 'try', pid: 'M11' },
     { t: 'try', pid: 'M12' },
     { t: 'try', pid: 'X10' },
+    { t: 'try', pid: 'C40' },
+    { t: 'try', pid: 'M16' },
     { t: 'try', pid: 'M08' },
   ] },
   { id: 'L9', title: 'Boss Tactics', sub: 'None of the above · disguised answers · value-at-a-point', time: 7, cards: [
@@ -259,7 +269,9 @@ Hyperbolic = trig with all plus signs. $\ln$ uses $\tfrac1n$, not $\tfrac1{n!}$.
 
 For partials at a point, plug in zeros early where it is legal: a factor that becomes $0$ kills its whole term.` },
     { t: 'xray', pid: 'M30' },
+    { t: 'try', pid: 'M07' },
     { t: 'try', pid: 'M38' },
+    { t: 'try', pid: 'M21' },
     { t: 'try', pid: 'M04' },
     { t: 'try', pid: 'M23' },
   ] },
@@ -312,11 +324,11 @@ export const REFERENCE = [
     F(r`\sin u,\tan u,\sinh u,\tanh u\ (u\to0)`, r`\approx u`), F(r`\ln(1+u),\ e^u-1\ (u\to0)`, r`\approx u`),
     F(r`1-\cos u`, r`\approx\dfrac{u^2}{2}`), F(r`\cosh u-1`, r`\approx\dfrac{u^2}{2}`),
     F(r`\sin u-u`, r`\approx-\dfrac{u^3}{6}`), F(r`\sinh u-u`, r`\approx+\dfrac{u^3}{6}`),
-    F(r`\tan u-u`, r`\approx+\dfrac{u^3}{3}`), F(r`\tanh u-u`, r`\approx-\dfrac{u^3}{3}`),
+    F(r`\tan u-u`, r`\approx+\dfrac{u^3}{3}`), F(r`\tanh u-u`, r`\approx-\dfrac{u^3}{3}`), F(r`\sin^{-1}u-u`, r`\approx+\dfrac{u^3}{6}`), F(r`u-\tan^{-1}u`, r`\approx+\dfrac{u^3}{3}`),
     F(r`e^u-1-u-\tfrac{u^2}{2}-\tfrac{u^3}{6}`, r`\approx\dfrac{u^4}{24}`), F(r`\cos u-1+\tfrac{u^2}{2}`, r`\approx\dfrac{u^4}{24}`),
     F(r`\ln(1+u)-u+\tfrac{u^2}{2}-\tfrac{u^3}{3}`, r`\approx-\dfrac{u^4}{4}`),
     F(r`\lim\,[1+f]^{g}\ (1^\infty)`, r`e^{\lim f\cdot g}`), F(r`\lim_{x\to0^+}x^x`, r`1`), F(r`\lim_{x\to\infty}x^{1/x}`, r`1`),
-    F(r`\lim_{x\to0^+}x\ln x`, r`0`), F(r`\lim_{x\to\infty}\left(1+\tfrac ax\right)^{bx}`, r`e^{ab}`),
+    F(r`\lim_{x\to0^+}x\ln x`, r`0`), F(r`\ln\cosh x\ (x\to\infty)`, r`\approx x-\ln2`), F(r`\dfrac{(1+x)^{1/x}-e}{x}\ (x\to0)`, r`-\dfrac e2`), F(r`\lim_{x\to\infty}\left(1+\tfrac ax\right)^{bx}`, r`e^{ab}`),
   ] },
 ];
 

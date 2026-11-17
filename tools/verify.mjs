@@ -8,10 +8,12 @@ const TOPICS = ['explog', 'hyp', 'invhyp', 'partial', 'lhopital', 'found'];
 const files = process.argv.slice(2);
 let fail = 0, total = 0;
 const ids = new Set();
+const all = {};
 for (const f of files) {
   const mod = await import(pathToFileURL(path.resolve(f)).href);
   for (const p of mod.default) {
     total++;
+    all[p.id] = p;
     const errs = [];
     if (ids.has(p.id)) errs.push('duplicate id');
     ids.add(p.id);
@@ -31,7 +33,7 @@ for (const f of files) {
         const loose = p.kind === 'lim';
         if (Number.isNaN(r.truth)) { if (!alt) errs.push('truth is NaN at test point (set x0?)'); continue; }
         r.choices.forEach((v, i) => {
-          if (Number.isNaN(v) && !alt) errs.push(`choice ${i} NaN`);
+          if (Number.isNaN(v) && !alt && p.kind !== 'lim') errs.push(`choice ${i} NaN`); // NaN = "does not exist" for limits
           const match = close(v, r.truth, loose);
           if (i === p.ans && !match) errs.push(`KEY MISMATCH: truth=${r.truth} keyed choice ${i}=${v}`);
           if (i !== p.ans && match) errs.push(`distractor ${i} equals truth (${v})`);
@@ -43,5 +45,24 @@ for (const f of files) {
     if (errs.length) { fail++; console.log(`FAIL ${p.id}: ${[...new Set(errs)].join(' | ')}`); }
   }
 }
+// NOTA variants: swap the correct option for the extra distractor; E must then be right.
+let extras = {};
+try { extras = (await import('../js/data/nota-extra.js')).default; } catch {}
+let vOk = 0, vN = 0;
+for (const [id, ex] of Object.entries(extras)) {
+  const p = all[id]; if (!p) continue; // bank not loaded in this invocation
+  vN++;
+  const v = { ...p, ch: p.ch.map((c, i) => (i === p.ans ? ex : c)), ans: 4, truth: [p.ch[p.ans][0], p.ch[p.ans][1]] };
+  const errs = [];
+  if (p.ans === 4 || p.kind === 'free') errs.push('base problem cannot take a variant');
+  else for (const alt of p.kind === 'lim' || p.at != null ? [false] : [false, true]) {
+    const r = evalProblem(v, alt), loose = p.kind === 'lim';
+    if (Number.isNaN(r.truth)) continue;
+    r.choices.forEach((c, i) => { if (close(c, r.truth, loose)) errs.push(`variant option ${i} equals truth`); for (let j = 0; j < i; j++) if (close(c, r.choices[j], loose)) errs.push(`variant options ${j},${i} coincide`); });
+    if (!close(r.truthExpr, r.truth, loose)) errs.push('variant truth mismatch');
+  }
+  if (errs.length) { fail++; console.log(`FAIL ${id} (NOTA variant): ${[...new Set(errs)].join(' | ')}`); } else vOk++;
+}
+if (vN) console.log(`${vOk}/${vN} NOTA variants passed`);
 console.log(`${total - fail}/${total} passed`);
 process.exit(fail ? 1 : 0);

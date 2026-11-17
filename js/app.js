@@ -3,10 +3,12 @@ import coreB from './data/bank-core-b.js';
 import mock from './data/bank-mock.js';
 import leithold from './data/bank-leithold.js';
 import peterson from './data/bank-peterson.js';
+import coreC from './data/bank-core-c.js';
+import NOTA_EXTRA from './data/nota-extra.js';
 import { TOPICS, TECHS, TRAPS, LESSONS, REFERENCE, PLAYBOOK } from './data/content.js';
 import { evalProblem, close } from './mathenv.js';
 
-const BANK = [...coreA, ...coreB, ...mock, ...leithold, ...peterson];
+const BANK = [...coreA, ...coreB, ...coreC, ...mock, ...leithold, ...peterson];
 const BY_ID = Object.fromEntries(BANK.map((p) => [p.id, p]));
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view'), nav = $('#nav');
@@ -51,7 +53,11 @@ const TABS = [['home', 'Home'], ['train', 'Train'], ['arena', 'Arena'], ['vault'
 
 // ───────────── problem presentation ─────────────
 // Builds a shuffled presentation: 4 real choices in random order + E = None of the above.
-function present(p) {
+function present(p, allowVariant = false) {
+  const ex = NOTA_EXTRA[p.id];
+  if (allowVariant && ex && p.ans !== 4 && Math.random() < 0.3) {
+    p = { ...p, ch: p.ch.map((c, i) => (i === p.ans ? ex : c)), ans: 4, truth: [p.ch[p.ans][0], p.ch[p.ans][1]], variant: true };
+  }
   const order = shuffle([0, 1, 2, 3]);
   return { p, order, correct: p.ans === 4 ? 4 : order.indexOf(p.ans) };
 }
@@ -70,11 +76,14 @@ function tape(pr) {
   let head;
   if (isLim) head = `CALC near x → ${p.to === 'inf' ? '∞' : p.to === '-inf' ? '−∞' : p.to.replace('PI', 'π').replace(/\*/g, '')}`;
   else if (p.kind === 'd') head = atPt ? `d/dx at the given point` : `d${p.n > 1 ? '^' + p.n : ''}/dx at X = ${r.point[0]}`;
+  else if (p.kind === 'imp2') head = `d²y/dx² on the curve at x = ${r.point[0]}, y = ${fmtN(r.point[1])}`;
+  else if (p.kind === 'impz') head = `−Fx/Fz on the surface at x = ${r.point[0]}, y = ${r.point[1]}, z = ${fmtN(r.point[2])}`;
+  else if (p.kind === 'euler') head = `x·zx + y·zy at X = ${r.point[0]}, Y = ${r.point[1]}  (z = ${fmtN(r.point[2])})`;
   else if (p.kind === 'imp') head = `−Fx/Fy on the curve at x = ${r.point[0]}, y = ${fmtN(r.point[1])}`;
   else head = atPt ? `∂/∂${p.wrt} at the given point` : `∂/∂${p.wrt.split('').join('∂')} at X = ${r.point[0]}, Y = ${r.point[1]}${/z/.test(p.f) ? ', Z = ' + r.point[2] : ''}`;
   const loose = isLim;
   let out = `<b>${head}</b>\n  = <b>${fmtN(r.truth)}</b>\n`;
-  pr.order.forEach((oi, i) => { const v = r.choices[oi], hit = close(v, r.truth, loose); out += `${hit ? '<span class="hit">' : ''}  ${LETTERS[i]}  ${fmtN(v).padEnd(12)}${hit ? ' ← match</span>' : ''}\n`; });
+  pr.order.forEach((oi, i) => { const v = r.choices[oi], hit = close(v, r.truth, loose); out += `${hit ? '<span class="hit">' : ''}  ${LETTERS[i]}  ${(isLim && Number.isNaN(v) ? 'DNE' : fmtN(v)).padEnd(12)}${hit ? ' ← match</span>' : ''}\n`; });
   if (p.ans === 4) out += `<span class="hit">  no option matches ⇒ None of the above</span>\n`;
   return out;
 }
@@ -106,7 +115,7 @@ function explainHTML(pr, picked, ms) {
     <div class="row between"><div class="verdict ${ok ? 'ok' : 'no'}">${ok ? '✓ Correct' : picked == null ? '— Skipped' : '✕ Not quite'}</div>${speed}</div>
     <div class="fb-sec"><div class="eyebrow">The move · ${esc(t.name)}</div><div>${rich(p.xr || t.move)}</div></div>
     ${truth}
-    <div class="fb-sec"><div class="eyebrow">Fast path</div><div class="scroll-x">${rich(p.sol)}</div></div>
+    <div class="fb-sec"><div class="eyebrow">Fast path</div><div class="scroll-x">${rich(p.sol)}${p.variant ? '<br><b>That expression was not among the options this time ⇒ None of the above.</b>' : ''}</div></div>
     ${p.calc ? `<div class="fb-sec"><div class="eyebrow">Calculator</div><div>${rich(p.calc)}</div></div>` : ''}
     ${tp ? `<div class="fb-sec"><div class="eyebrow">Calculator tape</div><div class="tape">${tp}</div></div>` : ''}
     <div class="fb-sec row" style="flex-wrap:wrap;gap:6px"><span class="chip">${TOPICS[p.topic].name}</span><span class="chip">${['', 'Easy', 'Medium', 'Hard'][p.diff]}</span>${p.src ? `<span class="chip">${esc(p.src)}</span>` : ''}</div>
@@ -115,6 +124,7 @@ function explainHTML(pr, picked, ms) {
 function record(p, ok, ms, trapTag) {
   const h = (S.hist[p.id] ||= { n: 0, c: 0, t: 0 });
   h.n++; if (ok) h.c++; h.t = ms; h.last = Date.now();
+  h.miss = ok ? Math.max(0, (h.miss || 0) - 1) : 2; // a miss must be answered right twice to clear
   if (!ok && trapTag) S.traps[trapTag] = (S.traps[trapTag] || 0) + 1;
   save();
 }
@@ -245,7 +255,7 @@ AFTER.recon = () => {
 };
 
 // ───────────── ARENA ─────────────
-let setup = { mode: 'medium', len: 20, exam: false };
+let setup = { mode: 'medium', len: 20, exam: false, topic: '' };
 const MODE_INFO = {
   easy: 'Textbook-level. One idea per problem. Build clean habits and raw speed.',
   medium: 'Exam-typical. One trap per problem; pruning starts to pay.',
@@ -257,23 +267,27 @@ VIEWS.arena = () => {
   return `<div class="eyebrow">Exam simulation</div><h1 class="h1">Arena</h1>
   <div class="seg mt">${['easy', 'medium', 'hard', 'endless'].map((m) => `<button data-act="mode" data-m="${m}" data-tone="${m}" class="${!setup.exam && setup.mode === m ? 'on' : ''}">${m}</button>`).join('')}</div>
   <p class="sub mt" style="min-height:46px">${setup.exam ? 'Full simulation: 40 mixed items, one 120:00 countdown, answers revealed only at the end. Exactly like the real thing.' : MODE_INFO[setup.mode]}</p>
+  ${setup.exam ? '' : `<div class="row mt" style="flex-wrap:wrap;gap:6px"><button class="chip ${!setup.topic ? 'on' : ''}" data-act="topic" data-t="">All topics</button>${Object.entries(TOPICS).map(([id, tp]) => `<button class="chip ${setup.topic === id ? 'on' : ''}" data-act="topic" data-t="${id}">${tp.name}</button>`).join('')}</div>`}
   <div class="card mt" style="padding:4px 16px">
     <div class="opt"><div><b>Exam mode</b><small>40 items · 120-minute countdown · no feedback until the end</small></div><button class="switch ${setup.exam ? 'on' : ''}" data-act="exam" role="switch" aria-checked="${setup.exam}" aria-label="Exam mode"></button></div>
     <div class="opt"><div><b>Question stopclock</b><small>Per-question timer and 2:00 pace bar</small></div><button class="switch ${S.settings.timer ? 'on' : ''}" data-act="set" data-k="timer" role="switch" aria-checked="${S.settings.timer}" aria-label="Stopclock"></button></div>
     ${setup.exam ? '' : `<div class="opt"><div><b>Instant feedback</b><small>Show the fast path after each answer</small></div><button class="switch ${S.settings.instant ? 'on' : ''}" data-act="set" data-k="instant" role="switch" aria-checked="${S.settings.instant}" aria-label="Instant feedback"></button></div>`}
     ${setup.exam || setup.mode === 'endless' ? '' : `<div class="opt"><div><b>Run length</b><small>Questions per run</small></div><div class="seg" style="width:150px"><button data-act="len" data-n="10" class="${setup.len === 10 ? 'on' : ''}">10</button><button data-act="len" data-n="20" class="${setup.len === 20 ? 'on' : ''}">20</button><button data-act="len" data-n="40" class="${setup.len === 40 ? 'on' : ''}">40</button></div></div>`}
   </div>
+  ${missed().length >= 3 && !setup.exam ? `<button class="card tap mt" data-act="redo"><div class="row between"><div><div class="eyebrow" style="color:var(--k-pink)">Redemption run</div><div class="h2" style="margin-top:6px">${missed().length} problems you missed</div><p class="sub" style="font-size:13px;margin-top:2px">Each one stays here until you get it right twice.</p></div><span class="key pink sm">Go</span></div></button>` : ''}
   <button class="key yellow wide mt" style="min-height:58px;font-size:15px" data-act="start">Start ${setup.exam ? 'exam' : 'run'}</button>
   ${best && !setup.exam ? `<p class="sub mt mono" style="font-size:12px;text-align:center">BEST ${setup.mode.toUpperCase()}: ${best.score}/${best.n} · ${fmtT(best.totalMs / best.n / 1000)} per item</p>` : ''}
   ${S.runs.length ? `<div class="mt-l eyebrow">Recent runs</div><div class="card mt" style="padding:4px 16px">${S.runs.slice(-6).reverse().map((r) => `<div class="rev"><span class="mk ${r.score / r.n >= 0.75 ? 'ok' : 'no'}">${pct(r.score, r.n)}</span><span class="q">${r.exam ? 'EXAM' : r.mode.toUpperCase()} · ${r.score}/${r.n} · ${new Date(r.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span><span class="t ${r.totalMs / r.n / 1000 > TARGET ? 'red' : ''}">${fmtT(r.totalMs / r.n / 1000)}/q</span></div>`).join('')}</div>` : ''}`;
 };
 // weighted pick: unseen and previously-missed problems come first
 function pickPool(diffs, n, exclude = new Set()) {
-  const pool = BANK.filter((p) => diffs.includes(p.diff) && !exclude.has(p.id));
+  const pool = BANK.filter((p) => diffs.includes(p.diff) && !exclude.has(p.id) && (!setup.topic || setup.exam || p.topic === setup.topic));
   const w = (p) => { const h = S.hist[p.id]; return Math.random() + (!h ? 0.6 : h.c < h.n ? 0.45 : 0); };
   return pool.map((p) => [w(p), p]).sort((a, b) => b[0] - a[0]).slice(0, n).map((x) => x[1]);
 }
+const missed = () => BANK.filter((p) => { const h = S.hist[p.id]; return h && (h.miss || 0) > 0; });
 function buildQs(mode, len, exam) {
+  if (mode === 'redo') return shuffle(missed()).slice(0, 20);
   if (exam) return shuffle([...pickPool([1], 9), ...pickPool([2], 18), ...pickPool([3], 13)]);
   if (mode === 'endless') return nextEndless(new Set(), 12);
   const d = { easy: 1, medium: 2, hard: 3 }[mode];
@@ -284,12 +298,13 @@ function buildQs(mode, len, exam) {
 function nextEndless(used, n) {
   const out = [];
   for (let k = 0; k < n; k++) { const roll = Math.random(), d = roll < 0.12 ? 1 : roll < 0.56 ? 2 : 3; let c = pickPool([d], 1, used)[0];
-    if (!c) { used.clear(); c = pickPool([d], 1, used)[0]; } used.add(c.id); out.push(c); }
+    if (!c) { used.clear(); c = pickPool([d], 1, used)[0] || pickPool([1, 2, 3], 1, used)[0]; } if (!c) break; used.add(c.id); out.push(c); }
   return out;
 }
 function startRun(mode, len, exam) {
   const qs = buildQs(mode, len, exam);
-  go('run', { mode, exam, endless: mode === 'endless' && !exam, qs, used: new Set(qs.map((q) => q.id)), i: 0, ans: [], pr: present(qs[0]), t0: performance.now(), start: performance.now(), instant: exam ? false : S.settings.instant });
+  if (!qs.length) return toast('No problems match that filter');
+  go('run', { mode, exam, endless: mode === 'endless' && !exam, qs, used: new Set(qs.map((q) => q.id)), i: 0, ans: [], pr: present(qs[0], true), t0: performance.now(), start: performance.now(), instant: exam ? false : S.settings.instant });
 }
 VIEWS.run = () => {
   const pr = ctx.pr, p = pr.p, total = ctx.endless ? '∞' : ctx.qs.length, score = ctx.ans.filter((a) => a.ok).length;
@@ -324,7 +339,7 @@ function advance() {
   ctx.i++;
   if (ctx.endless && ctx.i >= ctx.qs.length) ctx.qs.push(...nextEndless(ctx.used, 8));
   if (ctx.i >= ctx.qs.length) return finishRun();
-  ctx.pr = present(ctx.qs[ctx.i]); ctx.picked = null; ctx.reveal = false; ctx.t0 = performance.now();
+  ctx.pr = present(ctx.qs[ctx.i], true); ctx.picked = null; ctx.reveal = false; ctx.t0 = performance.now();
   render(); window.scrollTo(0, 0);
 }
 function finishRun() {
@@ -450,8 +465,10 @@ const ACT = {
   mode: (d) => { setup.mode = d.m; setup.exam = false; render(); },
   exam: () => { setup.exam = !setup.exam; render(); },
   len: (d) => { setup.len = +d.n; render(); },
+  topic: (d) => { setup.topic = d.t; render(); },
   set: (d) => { S.settings[d.k] = !S.settings[d.k]; save(); render(); },
   start: () => startRun(setup.mode, setup.len, setup.exam),
+  redo: () => startRun('redo', 20, false),
   quick: (d) => startRun(d.mode, 10, false),
   recon: () => startRecon(),
   rpick: (d) => { if (ctx.done) return; clearInterval(tick); const p = ctx.qs[ctx.i], ok = d.k === p.tech; ctx.pick = d.k; ctx.done = true; if (ok) ctx.score++; ctx.log.push({ p, ok }); render(); },
@@ -485,5 +502,5 @@ document.addEventListener('keydown', (e) => {
 });
 window.addEventListener('beforeunload', (e) => { if (route === 'run' && ctx.ans?.length) e.preventDefault(); });
 
-if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) navigator.serviceWorker.register('sw.js').catch(() => {});
 go('home');
