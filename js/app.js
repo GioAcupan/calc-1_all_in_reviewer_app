@@ -291,10 +291,11 @@ VIEWS.arena = () => {
   return `<div class="eyebrow">Exam simulation</div><h1 class="h1">Arena</h1>
   ${resumeCard()}
   <div class="seg mt">${['easy', 'medium', 'hard', 'endless'].map((m) => `<button data-act="mode" data-m="${m}" data-tone="${m}" class="${!setup.exam && setup.mode === m ? 'on' : ''}">${m}</button>`).join('')}</div>
-  <p class="sub mt" style="min-height:46px">${setup.exam ? 'Full simulation: 40 mixed items, one 120:00 countdown, answers revealed only at the end. Exactly like the real thing.' : MODE_INFO[setup.mode]}</p>
+  <p class="sub mt" style="min-height:46px">${setup.exam ? (S.settings.examHard ? 'Hard simulation: 40 items weighted toward mock-exam difficulty (6 easy · 16 medium · 18 hard), one 120:00 countdown, answers revealed only at the end.' : 'Full simulation: 40 mixed items (9 easy · 18 medium · 13 hard), one 120:00 countdown, answers revealed only at the end. Exactly like the real thing.') : MODE_INFO[setup.mode]}</p>
   ${setup.exam ? '' : `<div class="row mt" style="flex-wrap:wrap;gap:6px"><button class="chip ${!setup.topic ? 'on' : ''}" data-act="topic" data-t="">All topics</button>${Object.entries(TOPICS).map(([id, tp]) => `<button class="chip ${setup.topic === id ? 'on' : ''}" data-act="topic" data-t="${id}">${tp.name}</button>`).join('')}</div>`}
   <div class="card mt" style="padding:4px 16px">
     <div class="opt"><div><b>Exam mode</b><small>40 items · 120-minute countdown · no feedback until the end</small></div><button class="switch ${setup.exam ? 'on' : ''}" data-act="exam" role="switch" aria-checked="${setup.exam}" aria-label="Exam mode"></button></div>
+    ${setup.exam ? `<div class="opt"><div><b>Exam difficulty</b><small>Hard leans on the mock-exam tier</small></div><div class="seg" style="width:170px"><button data-act="examlvl" data-v="std" class="${S.settings.examHard ? '' : 'on'}">Standard</button><button data-act="examlvl" data-v="hard" class="${S.settings.examHard ? 'on' : ''}">Hard</button></div></div>` : ''}
     <div class="opt"><div><b>Question stopclock</b><small>Per-question timer and 2:00 pace bar</small></div><button class="switch ${S.settings.timer ? 'on' : ''}" data-act="set" data-k="timer" role="switch" aria-checked="${S.settings.timer}" aria-label="Stopclock"></button></div>
     ${setup.exam ? '' : `<div class="opt"><div><b>Instant feedback</b><small>Show the fast path after each answer</small></div><button class="switch ${S.settings.instant ? 'on' : ''}" data-act="set" data-k="instant" role="switch" aria-checked="${S.settings.instant}" aria-label="Instant feedback"></button></div>`}
     ${setup.exam || setup.mode === 'endless' ? '' : `<div class="opt"><div><b>Run length</b><small>Questions per run</small></div><div class="seg" style="width:150px"><button data-act="len" data-n="10" class="${setup.len === 10 ? 'on' : ''}">10</button><button data-act="len" data-n="20" class="${setup.len === 20 ? 'on' : ''}">20</button><button data-act="len" data-n="40" class="${setup.len === 40 ? 'on' : ''}">40</button></div></div>`}
@@ -302,7 +303,7 @@ VIEWS.arena = () => {
   ${missed().length >= 3 && !setup.exam ? `<button class="card tap mt" data-act="redo"><div class="row between"><div><div class="eyebrow" style="color:var(--k-pink)">Redemption run</div><div class="h2" style="margin-top:6px">${missed().length} problems you missed</div><p class="sub" style="font-size:13px;margin-top:2px">Each one stays here until you get it right twice.</p></div><span class="key pink sm">Go</span></div></button>` : ''}
   <button class="key yellow wide mt" style="min-height:58px;font-size:15px" data-act="start">Start ${setup.exam ? 'exam' : 'run'}</button>
   ${best && !setup.exam ? `<p class="sub mt mono" style="font-size:12px;text-align:center">BEST ${setup.mode.toUpperCase()}: ${best.score}/${best.n} · ${fmtT(best.totalMs / best.n / 1000)} per item</p>` : ''}
-  ${S.runs.length ? `<div class="mt-l eyebrow">Recent runs</div><div class="card mt" style="padding:4px 16px">${S.runs.slice(-6).reverse().map((r) => `<div class="rev"><span class="mk ${r.score / r.n >= 0.75 ? 'ok' : 'no'}">${pct(r.score, r.n)}</span><span class="q">${r.exam ? 'EXAM' : r.mode.toUpperCase()} · ${r.score}/${r.n} · ${new Date(r.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span><span class="t ${r.totalMs / r.n / 1000 > TARGET ? 'red' : ''}">${fmtT(r.totalMs / r.n / 1000)}/q</span></div>`).join('')}</div>` : ''}`;
+  ${S.runs.length ? `<div class="mt-l eyebrow">Recent runs</div><div class="card mt" style="padding:4px 16px">${S.runs.slice(-6).reverse().map((r) => `<div class="rev"><span class="mk ${r.score / r.n >= 0.75 ? 'ok' : 'no'}">${pct(r.score, r.n)}</span><span class="q">${r.exam ? examName(r.exam).toUpperCase() : r.mode.toUpperCase()} · ${r.score}/${r.n} · ${new Date(r.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span><span class="t ${r.totalMs / r.n / 1000 > TARGET ? 'red' : ''}">${fmtT(r.totalMs / r.n / 1000)}/q</span></div>`).join('')}</div>` : ''}`;
 };
 // weighted pick: unseen and previously-missed problems come first
 function pickPool(diffs, n, exclude = new Set()) {
@@ -311,9 +312,12 @@ function pickPool(diffs, n, exclude = new Set()) {
   return pool.map((p) => [w(p), p]).sort((a, b) => b[0] - a[0]).slice(0, n).map((x) => x[1]);
 }
 const missed = () => BANK.filter((p) => { const h = S.hist[p.id]; return h && (h.miss || 0) > 0; });
+// exam is false, true (standard exam) or 'hard'. Mixes are easy / medium / hard counts out of 40.
+const EXAM_MIX = { std: [9, 18, 13], hard: [6, 16, 18] };
+const examName = (exam) => (exam === 'hard' ? 'Hard exam' : 'Exam');
 function buildQs(mode, len, exam) {
   if (mode === 'redo') return shuffle(missed()).slice(0, 20);
-  if (exam) return shuffle([...pickPool([1], 9), ...pickPool([2], 18), ...pickPool([3], 13)]);
+  if (exam) { const [e, m, h] = EXAM_MIX[exam === 'hard' ? 'hard' : 'std']; return shuffle([...pickPool([1], e), ...pickPool([2], m), ...pickPool([3], h)]); }
   if (mode === 'endless') return nextEndless(new Set(), 12);
   const d = { easy: 1, medium: 2, hard: 3 }[mode];
   let qs = pickPool([d], len);
@@ -347,7 +351,7 @@ function resumeRun() {
 function resumeCard() {
   const d = savedRun(); if (!d) return '';
   const total = d.endless ? '∞' : d.qs.length, left = d.exam ? ` · ${fmtT(Math.max(0, 7200 - d.elapsed / 1000))} left` : '';
-  return `<div class="card mt" style="border-color:#f4b93a88"><div class="eyebrow" style="color:var(--k-yellow)">Run in progress</div><div class="h2" style="margin-top:6px">${d.exam ? 'Exam' : d.mode[0].toUpperCase() + d.mode.slice(1)} · ${d.ans.length}/${total} answered${left}</div><div class="grid2 mt"><button class="key ghost sm" data-act="discard">Discard</button><button class="key yellow sm" data-act="resume">Resume</button></div></div>`;
+  return `<div class="card mt" style="border-color:#f4b93a88"><div class="eyebrow" style="color:var(--k-yellow)">Run in progress</div><div class="h2" style="margin-top:6px">${d.exam ? examName(d.exam) : d.mode[0].toUpperCase() + d.mode.slice(1)} · ${d.ans.length}/${total} answered${left}</div><div class="grid2 mt"><button class="key ghost sm" data-act="discard">Discard</button><button class="key yellow sm" data-act="resume">Resume</button></div></div>`;
 }
 function startRun(mode, len, exam) {
   const qs = buildQs(mode, len, exam);
@@ -359,7 +363,7 @@ VIEWS.run = () => {
   const pr = ctx.pr, p = pr.p, total = ctx.endless ? '∞' : ctx.qs.length, score = ctx.ans.filter((a) => a.ok).length;
   const fb = ctx.reveal ? explainHTML(pr, ctx.picked, ctx.ms) : '';
   return `<div class="hud"><button class="key ghost sm" data-act="quit" aria-label="End run">✕</button><span class="count">${String(ctx.i + 1).padStart(2, '0')}/${total}</span><div class="bar"><i style="width:${ctx.endless ? 100 : (ctx.i / ctx.qs.length) * 100}%"></i></div>${ctx.exam ? `<span class="clock" id="gclock">120:00</span>` : ctx.instant ? `<span class="count" style="color:var(--ok)">${score}✓</span>` : ''}${S.settings.timer ? `<span class="clock" id="clock">0:00</span>` : ''}</div>
-  <div class="lcd"><div class="lcd-row"><span>${TOPICS[p.topic].name}</span><span>${ctx.exam ? 'EXAM' : ctx.endless ? 'ENDLESS · ' + ['', 'EASY', 'MED', 'HARD'][p.diff] : ctx.mode.toUpperCase()}</span></div>${stemHTML(p, ctx.reveal)}${S.settings.timer ? `<div class="pace" id="pace"><i></i></div>` : ''}</div>
+  <div class="lcd"><div class="lcd-row"><span>${TOPICS[p.topic].name}</span><span>${ctx.exam ? examName(ctx.exam).toUpperCase() : ctx.endless ? 'ENDLESS · ' + ['', 'EASY', 'MED', 'HARD'][p.diff] : ctx.mode.toUpperCase()}</span></div>${stemHTML(p, ctx.reveal)}${S.settings.timer ? `<div class="pace" id="pace"><i></i></div>` : ''}</div>
   ${choicesHTML(pr, { picked: ctx.picked, reveal: ctx.reveal })}
   ${fb}
   <div class="sticky-next row">${ctx.reveal ? `<button class="key yellow wide" data-act="next">${!ctx.endless && ctx.i === ctx.qs.length - 1 ? 'See results' : 'Next question'}</button>` : `<button class="key ghost" data-act="skip">Skip</button><button class="key yellow wide" data-act="lock" ${ctx.picked == null ? 'disabled' : ''}>Lock in ${ctx.picked != null ? LETTERS[ctx.picked] : ''}</button>`}</div>`;
@@ -409,7 +413,7 @@ VIEWS.results = () => {
   const proj = Math.round(avg * 40 / 60);
   const verdict = acc < 50 && avg < 45 ? 'That was guessing speed. Slow down: run triage, prune, verify on every item before you lock in.' : acc >= 85 && avg <= TARGET ? 'Exam-ready pace and accuracy. Raise the difficulty.' : acc >= 85 ? 'Accurate, but you are paying for it in time. Prune before you compute.' : avg <= TARGET ? 'Fast, but leaking points. Slow down 10 seconds for the sign and chain scan.' : 'Both speed and accuracy need work — go back through the lessons flagged below.';
   const slow = ans.slice().sort((a, b) => b.ms - a.ms).slice(0, 3);
-  return `<div class="eyebrow">${run.exam ? 'Exam simulation' : run.mode + ' run'} · complete</div>
+  return `<div class="eyebrow">${run.exam ? examName(run.exam) + ' simulation' : run.mode + ' run'} · complete</div>
   <div class="lcd mt"><div class="lcd-row"><span>Score</span><span>${acc}%</span></div>
     <div class="score-big" style="position:relative;z-index:1">${run.score}<small>/${run.n}</small></div>
     <div class="grid3" style="position:relative;z-index:1;margin-top:18px">
@@ -541,7 +545,8 @@ const ACT = {
   len: (d) => { setup.len = +d.n; render(); },
   topic: (d) => { setup.topic = d.t; render(); },
   set: (d) => { S.settings[d.k] = !S.settings[d.k]; save(); render(); },
-  start: () => startRun(setup.mode, setup.len, setup.exam),
+  start: () => startRun(setup.mode, setup.len, setup.exam && (S.settings.examHard ? 'hard' : true)),
+  examlvl: (d) => { S.settings.examHard = d.v === 'hard'; save(); render(); },
   redo: () => startRun('redo', 20, false),
   resume: () => resumeRun(),
   discard: () => { clearRun(); render(); },

@@ -10,7 +10,7 @@ A mobile-first PWA that prepares one student for a Calc 1 final: 40 multiple-cho
 
 **Not covered:** the "limits toolkit" (Taylor series, standard-limit swaps). The student was not taught it. Every limit item must be solvable with **L'Hôpital or a plain CALC reading**. Shortcuts can appear only as optional extras (see Pedagogy rules).
 
-There are four sections: **Train** (9 lessons with guided practice, hints and X-ray highlighting), **Arena** (easy/medium/hard/endless runs, 20 questions by default, a 40-item exam mode, stopclock, results and areas to improve), **Vault** (formulas, playbook, SRS flashcards) and **Me** (stats, JSON export/import, reset).
+There are four sections: **Train** (9 lessons with guided practice, hints and X-ray highlighting), **Arena** (easy/medium/hard/endless runs, 20 questions by default, a 40-item exam mode with Standard 9/18/13 and Hard 6/16/18 easy/medium/hard mixes, stopclock, results and areas to improve), **Vault** (formulas, playbook, SRS flashcards) and **Me** (stats, JSON export/import, reset).
 
 ## Hard constraints
 

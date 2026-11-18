@@ -3,7 +3,7 @@
 Mobile-first PWA for drilling the Calculus 1 final (40 MCQ, 120 min) down to two minutes or less per item.
 
 - **Train** — 9 lessons (triage, pruning, exp/log, hyperbolic, inverse hyperbolic, partials, limits by L'Hôpital, long limits, boss tactics) with X-ray highlights and hinted practice, plus a 10-second "name the move" recognition sprint.
-- **Arena** — easy / medium / hard / endless runs (10, 20 or 40 items), per-question stopclock, and a 40-item / 120-minute exam mode. Results show pace, topic accuracy and the traps you fell for.
+- **Arena** — easy / medium / hard / endless runs (10, 20 or 40 items), per-question stopclock, and a 40-item / 120-minute exam mode in two difficulties: Standard (9 easy / 18 medium / 13 hard) and Hard (6 / 16 / 18). Results show pace, topic accuracy and the traps you fell for.
 - **Vault** — formula sheets, fx-991ES PLUS playbook, spaced-repetition flashcards.
 - **Stats** — progress stored in localStorage; export/import as JSON.
 
