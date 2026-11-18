@@ -20,7 +20,7 @@ const rich = (where, s) => {
   s.split(/(\$\$[\s\S]+?\$\$|\$[^$]+?\$)/g).forEach((p) => { if (p.startsWith('$') && p.length > 2) tex(where, p.replace(/^\$+|\$+$/g, '')); });
 };
 const ids = new Set();
-for (const f of ['core-a', 'core-b', 'core-c', 'core-d', 'mock', 'leithold', 'peterson']) {
+for (const f of ['core-a', 'core-b', 'core-c', 'core-d', 'core-e', 'mock', 'leithold', 'peterson']) {
   for (const p of (await import(`../js/data/bank-${f}.js`)).default) {
     ids.add(p.id);
     for (const k of ['stem', 'sol', 'xr', 'calc']) rich(`${p.id}.${k}`, p[k]);

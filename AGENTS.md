@@ -28,7 +28,7 @@ css/app.css             "fx-core" look: graphite body, .lcd glass panels, .key k
 js/app.js               all views + state: home, train/lesson, recon, arena/run/results, vault/flash, me
 js/mathenv.js           expression compiler + numeric verifier (derivatives, partials, implicit, limits)
 js/data/content.js      TOPICS, TECHS, TRAPS, LESSONS (L1–L9), REFERENCE, PLAYBOOK
-js/data/bank-*.js       problem banks (core-a..d, mock, leithold, peterson): 234 items
+js/data/bank-*.js       problem banks (core-a..e, mock, leithold, peterson): 287 items
 js/data/nota-extra.js   "None of the above" variants: id → replacement choice for the keyed answer
 js/data/lhopital-routes.js  L'Hôpital-only worked route for every limit whose solution uses a shortcut
 tools/verify.mjs        numeric answer-key checker (run after ANY bank change)
@@ -56,14 +56,14 @@ sw.js                   service worker, VERSION 'calc1-vN'
 
 ```sh
 node tools/check-tex.mjs        # expect: "... 0 problems"
-node tools/verify.mjs js/data/bank-core-a.js js/data/bank-core-b.js js/data/bank-core-c.js js/data/bank-core-d.js js/data/bank-mock.js js/data/bank-leithold.js js/data/bank-peterson.js
+node tools/verify.mjs js/data/bank-core-a.js js/data/bank-core-b.js js/data/bank-core-c.js js/data/bank-core-d.js js/data/bank-core-e.js js/data/bank-mock.js js/data/bank-leithold.js js/data/bank-peterson.js
 ```
 
 `npm run verify` can hang on this Windows machine, so run node directly. Expected output, with counts growing as you add items:
 
-- `234/234 passed`: every key is checked numerically at two test points.
+- `287/287 passed`: every key is checked numerically at two test points.
 - `30/30 NOTA variants passed`
-- `54/54 limit problems ...`: the **calculator-route** check. CALC near the point (a ± 0.01, or X = 100 for limits at ∞) must land closest to the keyed option. When `ans` is 4, every option must be more than 3% away. A new limit item that fails this check is not solvable by the student's calculator workflow, so rework it.
+- `67/67 limit problems ...`: the **calculator-route** check. CALC near the point (a ± 0.01, or X = 100 for limits at ∞) must land closest to the keyed option. When `ans` is 4, every option must be more than 3% away. A new limit item that fails this check is not solvable by the student's calculator workflow, so rework it.
 
 Don't hand-wave a key. If the verifier can't check an item (`kind: 'free'`), verify it by hand and say so in the commit.
 

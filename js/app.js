@@ -5,12 +5,13 @@ import leithold from './data/bank-leithold.js';
 import peterson from './data/bank-peterson.js';
 import coreC from './data/bank-core-c.js';
 import coreD from './data/bank-core-d.js';
+import coreE from './data/bank-core-e.js';
 import NOTA_EXTRA from './data/nota-extra.js';
 import { TOPICS, TECHS, TRAPS, LESSONS, REFERENCE, PLAYBOOK } from './data/content.js';
 import { evalProblem, close, limitProbes, nearestOption } from './mathenv.js';
 import LH from './data/lhopital-routes.js';
 
-const BANK = [...coreA, ...coreB, ...coreC, ...coreD, ...mock, ...leithold, ...peterson];
+const BANK = [...coreA, ...coreB, ...coreC, ...coreD, ...coreE, ...mock, ...leithold, ...peterson];
 const BY_ID = Object.fromEntries(BANK.map((p) => [p.id, p]));
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view'), nav = $('#nav');

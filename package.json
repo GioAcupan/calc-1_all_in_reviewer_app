@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "verify": "node tools/verify.mjs js/data/bank-core-a.js js/data/bank-core-b.js js/data/bank-core-c.js js/data/bank-core-d.js js/data/bank-mock.js js/data/bank-leithold.js js/data/bank-peterson.js",
+    "verify": "node tools/verify.mjs js/data/bank-core-a.js js/data/bank-core-b.js js/data/bank-core-c.js js/data/bank-core-d.js js/data/bank-core-e.js js/data/bank-mock.js js/data/bank-leithold.js js/data/bank-peterson.js",
     "check-tex": "node tools/check-tex.mjs",
     "dev": "npx serve -l 5173 ."
   }
